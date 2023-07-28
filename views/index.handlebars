@@ -1,0 +1,129 @@
+<div class="jumbotron"  style="background-image: url(https://cdn.shopify.com/s/files/1/1125/0582/products/BurgertimeMarquee_70c86e51-e8e6-4bc2-b756-4646843d0630_1024x1024.jpg?v=1539195353); height: 400px">
+{{!-- <h1 style="color: white; text-align:center">Burger Time!</h1> --}}
+</div>
+
+<div class="container" >
+    <div class="row">
+        <div class="col-lg-4">
+<ul>
+  {{#each burgers}}
+    <li>
+      <p>
+        {{this.id}}. {{this.coyoteName}}
+
+        <button data-coyotid="{{this.id}}" class="eatBurger btn btn-warning">Devour</button>
+      </p>
+    </li>
+  {{/each}}
+</ul>
+</div> {{!--end of column 1--}}
+<div class="col-lg-4">
+<h2>Coyotes:</h2>
+<br>
+<form id="addCoyote" class="button-size">
+	<textarea type="text" name="Burger"></textarea>
+</form>
+<div class="row">
+	<button type="submit" class="btn btn-primary" id="burgerButton">Report a Coyote Sighting!</button>
+</div>
+</div>
+<div class="col-lg-4">
+    <ul>
+  {{#each oldCoyotes}}
+    <li>
+      <p>
+        {{this.id}}. {{this.coyoteName}}
+
+        <button data-coyotid="{{this.id}}" class="delcoyote btn btn-danger">X</button>
+      </p>
+    </li>
+  {{/each}}
+</ul>
+</div>
+</div> {{!--end of row--}}
+<div class="row">
+    <div class="col-lg-12"></div>
+</div>
+</div> {{!-- end of container --}}
+
+<script type="text/javascript">
+//eat burgers
+  $(".eatBurger").on("click", function(event) {
+    var id = $(this).attr("data-burgerid")
+    console.log(id)
+    console.log("eating burger")
+    $.ajax("/Burgers/" + id, {
+      type: "PUT"
+    }).then(
+      function() {
+        console.log("devoured ", id);
+        // Reload the page to get the updated list
+        location.reload();
+      }
+    );
+  });
+
+// delete burgers
+$(".delburger").on("click", function(event) {
+    var id = $(this).attr("data-burgerid")
+    console.log(`deleting ${id}`)
+    // Send the DELETE request.
+    $.ajax("/burgers/" + id, {
+      type: "DELETE"
+    }).then(
+      function() {
+        console.log("deleted id ", id);
+        // Reload the page to get the updated list
+        location.reload();
+      }
+    );
+  });
+
+// add burgers
+  $("#burgerButton").on("click", function(event) {
+    // Make sure to preventDefault on a submit event.
+    event.preventDefault();
+
+    var newBurger = {
+      Burger: $("#addBurger [name=Burger]").val().trim()
+    };
+
+if(newBurger!=""){
+    // Send the POST request.
+    $.ajax("/Burgers", {
+      type: "POST",
+      data: newBurger
+    }).then(
+      function() {
+        console.log("added new Burger");
+        // Reload the page to get the updated list
+        location.reload();
+      }
+    );
+  }
+  });
+/*
+  $("#updateBurger").on("submit", function(event) {
+    // Make sure to preventDefault on a submit event.
+    event.preventDefault();
+
+    var id = $("[name=id]").val().trim();
+
+    var updatedBurger = {
+      Burger: $("#updateBurger [name=Burger]").val().trim()
+    };
+
+    // Send the PUT request.
+    $.ajax("/Burgers/" + id, {
+      type: "PUT",
+      data: updatedBurger
+    }).then(
+      function() {
+        console.log("updated id ", id);
+        // Reload the page to get the updated list
+        location.reload();
+      }
+    );
+  });
+  */
+</script>

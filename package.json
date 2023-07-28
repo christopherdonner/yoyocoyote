@@ -16,5 +16,10 @@
   "bugs": {
     "url": "https://github.com/christopherdonner/yoyocoyte/issues"
   },
-  "homepage": "https://github.com/christopherdonner/yoyocoyte#readme"
+  "homepage": "https://github.com/christopherdonner/yoyocoyte#readme",
+  "dependencies": {
+    "express": "^4.18.2",
+    "express-handlebars": "^7.1.0",
+    "mysql": "^2.18.1"
+  }
 }
