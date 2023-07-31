@@ -1,18 +1,23 @@
 <div class="jumbotron" >
   YoYoCoyote
-{{!-- <h1 style="color: white; text-align:center">Burger Time!</h1> --}}
+{{!-- <h1 style="color: white; text-align:center">coyote Time!</h1> --}}
 </div>
 
 <div class="container" >
+  <div class="row">
+    AIzaSyDo6xNf74hkUlNekfeZ9XxHBnjTnoJjH8o
+    <div id="map"></div>
+    
+  </div>
     <div class="row">
         <div class="col-lg-4">
 <ul>
-  {{#each burgers}}
+  {{#each coyotes}}
     <li>
       <p>
         {{this.id}}. {{this.coyoteName}}
 
-        <button data-coyotid="{{this.id}}" class="eatBurger btn btn-warning">Devour</button>
+        <button data-coyotid="{{this.id}}" class="eatcoyote btn btn-warning">Devour</button>
       </p>
     </li>
   {{/each}}
@@ -22,10 +27,10 @@
 <h2>Coyotes:</h2>
 <br>
 <form id="addCoyote" class="button-size">
-	<textarea type="text" name="Burger"></textarea>
+	<textarea type="text" name="coyote"></textarea>
 </form>
 <div class="row">
-	<button type="submit" class="btn btn-primary" id="burgerButton">Report a Coyote Sighting!</button>
+	<button type="submit" class="btn btn-primary" id="coyoteButton">Report a Coyote Sighting!</button>
 </div>
 </div>
 <div class="col-lg-4">
@@ -46,14 +51,16 @@
     <div class="col-lg-12"></div>
 </div>
 </div> {{!-- end of container --}}
-
+<script>
+  
+</script>
 <script type="text/javascript">
-//eat burgers
-  $(".eatBurger").on("click", function(event) {
-    var id = $(this).attr("data-burgerid")
+//eat coyotes
+  $(".eatcoyote").on("click", function(event) {
+    var id = $(this).attr("data-coyoteid")
     console.log(id)
-    console.log("eating burger")
-    $.ajax("/Burgers/" + id, {
+    console.log("eating coyote")
+    $.ajax("/coyotes/" + id, {
       type: "PUT"
     }).then(
       function() {
@@ -64,12 +71,12 @@
     );
   });
 
-// delete burgers
-$(".delburger").on("click", function(event) {
-    var id = $(this).attr("data-burgerid")
+// delete coyotes
+$(".delcoyote").on("click", function(event) {
+    var id = $(this).attr("data-coyoteid")
     console.log(`deleting ${id}`)
     // Send the DELETE request.
-    $.ajax("/burgers/" + id, {
+    $.ajax("/coyotes/" + id, {
       type: "DELETE"
     }).then(
       function() {
@@ -80,23 +87,23 @@ $(".delburger").on("click", function(event) {
     );
   });
 
-// add burgers
-  $("#burgerButton").on("click", function(event) {
+// add coyotes
+  $("#coyoteButton").on("click", function(event) {
     // Make sure to preventDefault on a submit event.
     event.preventDefault();
 
-    var newBurger = {
-      Burger: $("#addBurger [name=Burger]").val().trim()
+    var newcoyote = {
+      coyote: $("textarea[name=coyote]").val().trim()
     };
 
-if(newBurger!=""){
+if(newcoyote!=""){
     // Send the POST request.
-    $.ajax("/Burgers", {
+    $.ajax("/coyotes", {
       type: "POST",
-      data: newBurger
+      data: newcoyote
     }).then(
       function() {
-        console.log("added new Burger");
+        console.log("added new coyote");
         // Reload the page to get the updated list
         location.reload();
       }
@@ -104,20 +111,20 @@ if(newBurger!=""){
   }
   });
 /*
-  $("#updateBurger").on("submit", function(event) {
+  $("#updatecoyote").on("submit", function(event) {
     // Make sure to preventDefault on a submit event.
     event.preventDefault();
 
     var id = $("[name=id]").val().trim();
 
-    var updatedBurger = {
-      Burger: $("#updateBurger [name=Burger]").val().trim()
+    var updatedcoyote = {
+      coyote: $("#updatecoyote [name=coyote]").val().trim()
     };
 
     // Send the PUT request.
-    $.ajax("/Burgers/" + id, {
+    $.ajax("/coyotes/" + id, {
       type: "PUT",
-      data: updatedBurger
+      data: updatedcoyote
     }).then(
       function() {
         console.log("updated id ", id);
@@ -128,3 +135,4 @@ if(newBurger!=""){
   });
   */
 </script>
+
