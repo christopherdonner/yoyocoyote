@@ -1,69 +1,69 @@
-<div class="jumbotron" >
+<div class="jumbotron">
   YoYoCoyote
-{{!-- <h1 style="color: white; text-align:center">coyote Time!</h1> --}}
+  {{!-- <h1 style="color: white; text-align:center">coyote Time!</h1> --}}
 </div>
 
-<div class="container" >
+<div class="container">
   <div class="row">
     AIzaSyDo6xNf74hkUlNekfeZ9XxHBnjTnoJjH8o
     <div id="map"></div>
-    
+
   </div>
-    <div class="row">
-        <div class="col-lg-4">
-<ul>
-  {{#each coyotes}}
-    <li>
-      <p>
-        {{this.id}}. {{this.coyoteName}}
+  <div class="row">
+    <div class="col-lg-4">
+      <ul>
+        {{#each coyotes}}
+        <li>
+          <p>
+            {{this.id}}. {{this.coyoteName}}
 
-        <button data-coyotid="{{this.id}}" class="eatcoyote btn btn-warning">Devour</button>
-      </p>
-    </li>
-  {{/each}}
-</ul>
-</div> {{!--end of column 1--}}
-<div class="col-lg-4">
-<h2>Coyotes:</h2>
-<br>
-<form id="addCoyote" class="button-size">
-	<textarea type="text" name="coyote"></textarea>
-</form>
-<div class="row">
-	<button type="submit" class="btn btn-primary" id="coyoteButton">Report a Coyote Sighting!</button>
-</div>
-</div>
-<div class="col-lg-4">
-    <ul>
-  {{#each oldCoyotes}}
-    <li>
-      <p>
-        {{this.id}}. {{this.coyoteName}}
+            <button data-coyotid="{{this.id}}" class="eatcoyote btn btn-warning">Devour</button>
+          </p>
+        </li>
+        {{/each}}
+      </ul>
+    </div> {{!--end of column 1--}}
+    <div class="col-lg-4">
+      <h2>Coyotes:</h2>
+      <br>
+      <form id="addCoyote" class="button-size">
+        <textarea type="text" name="coyote"></textarea>
+      </form>
+      <div class="row">
+        <button type="submit" class="btn btn-primary" id="coyoteButton">Report a Coyote Sighting!</button>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <ul>
+        {{#each oldCoyotes}}
+        <li>
+          <p>
+            {{this.id}}. {{this.coyoteName}}
 
-        <button data-coyotid="{{this.id}}" class="delcoyote btn btn-danger">X</button>
-      </p>
-    </li>
-  {{/each}}
-</ul>
-</div>
-</div> {{!--end of row--}}
-<div class="row">
+            <button data-coyotid="{{this.id}}" class="delcoyote btn btn-danger">X</button>
+          </p>
+        </li>
+        {{/each}}
+      </ul>
+    </div>
+  </div> {{!--end of row--}}
+  <div class="row">
     <div class="col-lg-12"></div>
-</div>
+  </div>
 </div> {{!-- end of container --}}
 <script>
-  
+
 </script>
 <script type="text/javascript">
-//eat coyotes
-  $(".eatcoyote").on("click", function(event) {
+  //eat coyotes
+  $(".eatcoyote").on("click", function (event) {
     var id = $(this).attr("data-coyoteid")
     console.log(id)
     console.log("eating coyote")
     $.ajax("/coyotes/" + id, {
       type: "PUT"
     }).then(
-      function() {
+      function () {
         console.log("devoured ", id);
         // Reload the page to get the updated list
         location.reload();
@@ -71,15 +71,15 @@
     );
   });
 
-// delete coyotes
-$(".delcoyote").on("click", function(event) {
+  // delete coyotes
+  $(".delcoyote").on("click", function (event) {
     var id = $(this).attr("data-coyoteid")
     console.log(`deleting ${id}`)
     // Send the DELETE request.
     $.ajax("/coyotes/" + id, {
       type: "DELETE"
     }).then(
-      function() {
+      function () {
         console.log("deleted id ", id);
         // Reload the page to get the updated list
         location.reload();
@@ -87,52 +87,89 @@ $(".delcoyote").on("click", function(event) {
     );
   });
 
-// add coyotes
-  $("#coyoteButton").on("click", function(event) {
+  // add coyotes
+  $("#coyoteButton").on("click", function (event) {
     // Make sure to preventDefault on a submit event.
     event.preventDefault();
+    var long, lat;
+navigator.geolocation.getCurrentPosition((pos)=>{
+long = pos.coords.longitude;
+lat = pos.coords.latitude;
 
+})
     var newcoyote = {
-      coyote: $("textarea[name=coyote]").val().trim()
+      coyote: $("textarea[name=coyote]").val().trim(),
+      longitude: long,
+      latitude: lat,
+      active: true
     };
 
-if(newcoyote!=""){
-    // Send the POST request.
-    $.ajax("/coyotes", {
-      type: "POST",
-      data: newcoyote
-    }).then(
-      function() {
-        console.log("added new coyote");
-        // Reload the page to get the updated list
-        location.reload();
-      }
-    );
-  }
+    if (newcoyote != "") {
+      // Send the POST request.
+      $.ajax("/coyotes", {
+        type: "POST",
+        data: newcoyote
+      }).then(
+        function () {
+          console.log("added new coyote");
+          // Reload the page to get the updated list
+          //location.reload();
+        }
+      );
+    }
   });
 /*
-  $("#updatecoyote").on("submit", function(event) {
-    // Make sure to preventDefault on a submit event.
-    event.preventDefault();
-
-    var id = $("[name=id]").val().trim();
-
-    var updatedcoyote = {
-      coyote: $("#updatecoyote [name=coyote]").val().trim()
-    };
-
-    // Send the PUT request.
-    $.ajax("/coyotes/" + id, {
-      type: "PUT",
-      data: updatedcoyote
-    }).then(
-      function() {
-        console.log("updated id ", id);
-        // Reload the page to get the updated list
-        location.reload();
-      }
-    );
-  });
-  */
+    $("#updatecoyote").on("submit", function(event) {
+      // Make sure to preventDefault on a submit event.
+      event.preventDefault();
+  
+      var id = $("[name=id]").val().trim();
+  
+      var updatedcoyote = {
+        coyote: $("#updatecoyote [name=coyote]").val().trim()
+      };
+  
+      // Send the PUT request.
+      $.ajax("/coyotes/" + id, {
+        type: "PUT",
+        data: updatedcoyote
+      }).then(
+        function() {
+          console.log("updated id ", id);
+          // Reload the page to get the updated list
+          location.reload();
+        }
+      );
+    });
+    */
 </script>
 
+<script>
+  (g => { var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__", m = document, b = window; b = b[c] || (b[c] = {}); var d = b.maps || (b.maps = {}), r = new Set, e = new URLSearchParams, u = () => h || (h = new Promise(async (f, n) => { await (a = m.createElement("script")); e.set("libraries", [...r] + ""); for (k in g) e.set(k.replace(/[A-Z]/g, t => "_" + t[0].toLowerCase()), g[k]); e.set("callback", c + ".maps." + q); a.src = `https://maps.${c}apis.com/maps/api/js?` + e; d[q] = f; a.onerror = () => h = n(Error(p + " could not load.")); a.nonce = m.querySelector("script[nonce]")?.nonce || ""; m.head.append(a) })); d[l] ? console.warn(p + " only loads once. Ignoring:", g) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n)) })
+    ({ key: "AIzaSyDo6xNf74hkUlNekfeZ9XxHBnjTnoJjH8o", v: "weekly" });
+
+  async function initMap() {
+    // The location of Uluru
+    const position = { lat: -25.344, lng: 131.031 };
+    // Request needed libraries.
+    //@ts-ignore
+    const { Map } = await google.maps.importLibrary("maps");
+    const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
+
+    // The map, centered at Uluru
+    map = new Map(document.getElementById("map"), {
+      zoom: 4,
+      center: position,
+      mapId: "DEMO_MAP_ID",
+    });
+
+    // The marker, positioned at Uluru
+    const marker = new AdvancedMarkerElement({
+      map: map,
+      position: position,
+      title: "Uluru",
+    });
+  }
+
+  initMap();
+</script>

@@ -52,7 +52,9 @@ app.get("/", function(req, res) {
 // // Create a new coyote
 app.post("/Coyotes", function(req, res) {
     console.log(req.body)
-  connection.query("INSERT INTO coyotes (coyoteName, active) VALUES (?, false)", [req.body.coyote], function(err, result) {
+  connection.query(
+    "INSERT INTO coyotes (coyoteName, longitude, latitude, active) VALUES (?)",
+     req.body, function(err, result) {
     if (err) {
       return res.status(503).end();
     }
@@ -64,48 +66,48 @@ app.post("/Coyotes", function(req, res) {
 });
 
 // Retrieve all coyotes
-// app.get("/Coyotes", function(req, res) {
-//   connection.query("SELECT * FROM coyotes;", function(err, data) {
-//     if (err) {
-//       return res.status(500).end();
-//     }
+app.get("/Coyotes", function(req, res) {
+  connection.query("SELECT * FROM coyotes;", function(err, data) {
+    if (err) {
+      return res.status(500).end();
+    }
 
-//     res.json(data);
-//   });
-// });
+    res.json(data);
+  });
+});
 
-// // Update a coyote
-// app.put("/Coyotes/:id", function(req, res) {
-//   console.log(req.params.id)
-//   connection.query("UPDATE coyotes SET active = true WHERE id = ?", [req.params.id], function(err, result) {
-//     if (err) {
-//       // If an error occurred, send a generic server failure
-//       return res.status(500).end();
-//     }
-//     else if (result.changedRows === 0) {
-//       // If no rows were changed, then the ID must not exist, so 404
-//       return res.status(404).end();
-//     }
-//     res.status(200).end();
+// Update a coyote
+app.put("/Coyotes/:id", function(req, res) {
+  console.log(req.params.id)
+  connection.query("UPDATE coyotes SET active = true WHERE id = ?", [req.params.id], function(err, result) {
+    if (err) {
+      // If an error occurred, send a generic server failure
+      return res.status(500).end();
+    }
+    else if (result.changedRows === 0) {
+      // If no rows were changed, then the ID must not exist, so 404
+      return res.status(404).end();
+    }
+    res.status(200).end();
 
-//   });
-// });
+  });
+});
 
-// // Delete a coyote
-// app.delete("/coyotes/:id", function(req, res) {
-//   connection.query("DELETE FROM coyotes WHERE id = ?", [req.params.id], function(err, result) {
-//     if (err) {
-//       // If an error occurred, send a generic server failure
-//       return res.status(500).end();
-//     }
-//     else if (result.affectedRows === 0) {
-//       // If no rows were changed, then the ID must not exist, so 404
-//       return res.status(404).end();
-//     }
-//     res.status(200).end();
+// Delete a coyote
+app.delete("/coyotes/:id", function(req, res) {
+  connection.query("DELETE FROM coyotes WHERE id = ?", [req.params.id], function(err, result) {
+    if (err) {
+      // If an error occurred, send a generic server failure
+      return res.status(500).end();
+    }
+    else if (result.affectedRows === 0) {
+      // If no rows were changed, then the ID must not exist, so 404
+      return res.status(404).end();
+    }
+    res.status(200).end();
 
-//   });
-// });
+  });
+});
 
 // Start our server so that it can begin listening to client requests.
 app.listen(PORT, function() {
@@ -113,27 +115,5 @@ app.listen(PORT, function() {
   console.log("Server listening on: http://localhost:" + PORT);
 });
 
-// async function initMap() {
-//   // The location of Uluru
-//   const position = { lat: -25.344, lng: 131.031 };
-//   // Request needed libraries.
-//   //@ts-ignore
-//   const { Map } = await google.maps.importLibrary("maps");
-//   const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
 
-//   // The map, centered at Uluru
-//   map = new Map(document.getElementById("map"), {
-//     zoom: 4,
-//     center: position,
-//     mapId: "DEMO_MAP_ID",
-//   });
 
-//   // The marker, positioned at Uluru
-//   const marker = new AdvancedMarkerElement({
-//     map: map,
-//     position: position,
-//     title: "Uluru",
-//   });
-// }
-
-// initMap();
