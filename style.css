@@ -1,0 +1,12 @@
+  div#map {
+  height: 100%;
+  overflow: unset;
+  position: absolute;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}

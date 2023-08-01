@@ -56,6 +56,7 @@ app.post("/Coyotes", function(req, res) {
     "INSERT INTO coyotes (coyoteName, longitude, latitude, active) VALUES (?)",
      req.body, function(err, result) {
     if (err) {
+      console.log(err);
       return res.status(503).end();
     }
 
