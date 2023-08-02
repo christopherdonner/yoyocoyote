@@ -6,7 +6,7 @@
 <div class="container">
   
   <div class="row">
-    <div class="col-lg-4">
+    <div class="col-lg-3">
       <ul>
         {{#each coyotes}}
         <li>
@@ -19,7 +19,7 @@
         {{/each}}
       </ul>
     </div> {{!--end of column 1--}}
-    <div class="col-lg-4">
+    <div class="col-lg-3">
       <h2>Coyotes:</h2>
       <br>
       <form id="addCoyote" class="button-size">
@@ -29,7 +29,9 @@
         <button type="submit" class="btn btn-primary" id="coyoteButton">Report a Coyote Sighting!</button>
       </div>
     </div>
-    <div class="col-lg-4">
+    <div class="col-lg-6">
+    <div id="map" style="height: 100%"></div>
+
       <ul>
         {{#each oldCoyotes}}
         <li>
@@ -41,7 +43,6 @@
         </li>
         {{/each}}
       </ul>
-    <div id="map" style="height: 100%"></div>
 
     </div>
   </div> {{!--end of row--}}
@@ -126,6 +127,7 @@ async function initMap() {
       coyoteName: $("textarea[name=coyote]").val().trim(),
       longitude: long,
       latitude: lat,
+      dtime: Date.now(),
       active: true
     };
 

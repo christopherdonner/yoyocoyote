@@ -8,6 +8,7 @@ create table coyotes
     coyoteName varchar (64),
     longitude decimal,
     latitude decimal,
+    dtime datetime,
     active boolean,
     primary key (id)
 );

@@ -37,15 +37,13 @@ connection.connect(function(err) {
 
 // // Use Handlebars to render the main index.html page with the coyotes in it.
 app.get("/", function(req, res) {
-  connection.query("SELECT * FROM coyotes where active=false", function(err, data) {
+  connection.query("SELECT * FROM coyotes", function(err, data) {
     if (err) {
       return res.status(500).end();
     }
-    connection.query("select * from coyotes where active=true", function(err, resp){
     // console.log(data)
     // console.log(req.body,res.body)
-    res.render("index", { coyotes: data, oldcoyotes: resp });
-    })
+    res.render("index", { coyotes: data });
   });
 });
 
