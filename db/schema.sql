@@ -6,9 +6,9 @@ create table coyotes
 (
     id int not null auto_increment,
     coyoteName varchar (64),
-    longitude decimal,
-    latitude decimal,
-    dtime datetime,
+    longitude decimal(14,12),
+    latitude decimal(14,12),
+    dtime bigint,
     active boolean,
     primary key (id)
 );
