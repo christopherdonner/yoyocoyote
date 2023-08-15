@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 var express = require("express");
 
 
@@ -49,9 +51,9 @@ app.get("/", function(req, res) {
 
 // // Create a new coyote
 app.post("/Coyotes", function(req, res) {
-    console.log(req.body)
+    console.log(req.body);
   connection.query(
-    "INSERT INTO coyotes (coyoteName, longitude, latitude, active) VALUES (?)",
+    "INSERT INTO coyotes (coyoteName, longitude, latitude, dtime, active) VALUES (?)",
      req.body, function(err, result) {
     if (err) {
       console.log(err);

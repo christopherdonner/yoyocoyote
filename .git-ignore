@@ -1,4 +1,3 @@
 ./node_modules
-/views/main.handlebars
-
-AIzaSyDo6xNf74hkUlNekfeZ9XxHBnjTnoJjH8o
+./views/main.handlebars
+./.env

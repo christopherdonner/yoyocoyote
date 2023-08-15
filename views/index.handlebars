@@ -6,7 +6,7 @@
 <div class="container">
   
   <div class="row">
-    <div class="col-lg-3">
+    <div class="col-lg-2">
       <ul>
         {{#each coyotes}}
         <li>
@@ -19,50 +19,31 @@
         {{/each}}
       </ul>
     </div> {{!--end of column 1--}}
-    <div class="col-lg-3">
-      <h2>Coyotes:</h2>
-      <br>
-      <form id="addCoyote" class="button-size">
-        <textarea type="text" name="coyote"></textarea>
-      </form>
-      <div class="row">
-        <button type="submit" class="btn btn-primary" id="coyoteButton">Report a Coyote Sighting!</button>
-      </div>
+    <div class="col-lg-10">
+      
+      {{!-- <div class="row"> --}}
+      {{!-- </div> --}}
+        <button type="submit" class="btn btn-danger" id="coyoteButton">Report a Coyote Sighting!</button>
+    <div id="map" style="height: 100%;"></div>
+    
     </div>
-    <div class="col-lg-6">
-    <div id="map" style="height: 100%"></div>
-
-      <ul>
-        {{#each oldCoyotes}}
-        <li>
-          <p>
-            {{this.id}}. {{this.coyoteName}}
-
-            <button data-coyotid="{{this.id}}" class="delcoyote btn btn-danger">X</button>
-          </p>
-        </li>
-        {{/each}}
-      </ul>
-
-    </div>
+    
   </div> {{!--end of row--}}
-  <div class="row">
-    <div class="col-lg-12"></div>
-  </div>
+
 </div> {{!-- end of container --}}
 <script>
 
 </script>
 <script type="text/javascript">
 
-    var long, lat;
+    var long, lat, coyoteCount;
 navigator.geolocation.getCurrentPosition((pos)=>{
 long = pos.coords.longitude;
 lat = pos.coords.latitude;
 
 async function initMap() {
     // The location of Uluru
-    const position = { lat: lat, lng: long };
+    let position = { lat: lat, lng: long };
     // Request needed libraries.
     //@ts-ignore
     const { Map } = await google.maps.importLibrary("maps");
@@ -70,53 +51,39 @@ async function initMap() {
 
     // The map, centered at Uluru
     map = new Map(document.getElementById("map"), {
-      zoom: 12,
+      zoom: 13,
       center: position,
       mapId: "DEMO_MAP_ID",
     });
 
     // The marker, positioned at Uluru
-    const marker = new AdvancedMarkerElement({
-      map: map,
-      position: position,
-      title: "Uluru",
-    });
+  
+
+    $.ajax("/coyotes", {
+      type: "GET",
+    }).then((coyotes) => {
+      coyoteCount = coyotes.length;
+
+      coyotes.forEach((coyote, i) => {
+          new AdvancedMarkerElement({
+            map: map,
+            position: {
+              lat: coyote.latitude,
+              lng: coyote.longitude
+            },
+            title: coyote.coyoteName
+          })
+
+      })
+      map.center={lat: coyote.latitude, lng: coyote.longitude};
+    })
   }
 
-  initMap();
+  
 
-  //eat coyotes
-  $(".eatcoyote").on("click", function (event) {
-    var id = $(this).attr("data-coyoteid")
-    console.log(id)
-    console.log("eating coyote")
-    $.ajax("/coyotes/" + id, {
-      type: "PUT"
-    }).then(
-      function () {
-        console.log("Deactivateed ", id);
-        // Reload the page to get the updated list
-        location.reload();
-      }
-    );
-  });
 
-  // delete coyotes
-  $(".delcoyote").on("click", function (event) {
-    var id = $(this).attr("data-coyoteid")
-    console.log(`deleting ${id}`)
-    // Send the DELETE request.
-    $.ajax("/coyotes/" + id, {
-      type: "DELETE"
-    }).then(
-      function () {
-        console.log("deleted id ", id);
-        // Reload the page to get the updated list
-        location.reload();
-      }
-    );
-  });
 
+ 
   // add coyotes
   $("#coyoteButton").on("click", function (event) {
     // Make sure to preventDefault on a submit event.
@@ -124,14 +91,13 @@ async function initMap() {
 
 
     var newcoyote = {
-      coyoteName: $("textarea[name=coyote]").val().trim(),
+      coyoteName: `coyote${coyoteCount}`,
       longitude: long,
       latitude: lat,
       dtime: Date.now(),
       active: true
     };
 
-    if (newcoyote != "") {
       // Send the POST request.
       $.ajax("/coyotes", {
         type: "POST",
@@ -140,15 +106,14 @@ async function initMap() {
         function () {
           console.log("added new coyote");
           // Reload the page to get the updated list
-          location.reload();
+          initMap();
         }
       );
-    }
 })
 
-  });
 
-   
+   initMap();
+  });
 /*
     $("#updatecoyote").on("submit", function(event) {
       // Make sure to preventDefault on a submit event.
@@ -175,7 +140,17 @@ async function initMap() {
     */
 </script>
 
-<script>
+{{!-- <style>
+    div#map {
+  height: 100%;
+  overflow: unset;
+  position: absolute;
+}
 
- 
-</script>
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+</style>> --}}
