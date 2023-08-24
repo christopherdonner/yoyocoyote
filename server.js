@@ -5,9 +5,20 @@ var express = require("express");
 
 app = express();
 
+
+const https = require('https');
+const fs = require('fs');
 // Set the port of our application
 // process.env.PORT lets the port be set by Heroku
 var PORT = process.env.PORT || 8080;
+var keys = require("./keys");
+
+var key = fs.readFileSync(__dirname + '/selfsigned.key');
+var cert = fs.readFileSync(__dirname + '/selfsigned.crt');
+var options = {
+  key: key,
+  cert: cert
+};
 
 // Sets up the Express app to handle data parsing
 app.use(express.urlencoded({ extended: true }));
@@ -53,15 +64,17 @@ app.get("/", function(req, res) {
 app.post("/Coyotes", function(req, res) {
     console.log(req.body);
   connection.query(
-    "INSERT INTO coyotes (coyoteName, longitude, latitude, dtime, active) VALUES (?)",
-     req.body, function(err, result) {
+    "INSERT INTO coyotes (coyoteName, longitude, latitude, dtime, active) VALUES (?, ?, ?, ?, ?)",
+     [req.body.coyoteName, req.body.longitude, req.body.latitude, req.body.dtime, req.body.active], function(err, result, response) {
+    console.log(result);
+    console.log(response);
     if (err) {
       console.log(err);
       return res.status(503).end();
     }
 
     // Send back the ID of the new coyote
-    res.json({ id: result.insertId });
+    res.json({ result });
     console.log({ id: result.insertId });
   });
 });
@@ -111,10 +124,20 @@ app.delete("/coyotes/:id", function(req, res) {
 });
 
 // Start our server so that it can begin listening to client requests.
-app.listen(PORT, function() {
-  // Log (server-side) when our server has started
-  console.log("Server listening on: http://localhost:" + PORT);
+// app.listen(PORT, function() {
+//   // Log (server-side) when our server has started
+//   console.log("Server listening on: http://localhost:" + PORT);
+// });
+
+
+
+
+app.get('/', (req, res) => {
+  res.send('Now using https..');
 });
 
+var server = https.createServer(options, app);
 
-
+server.listen(PORT, () => {
+ console.log("server starting on port : " + PORT)
+});

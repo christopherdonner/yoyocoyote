@@ -36,24 +36,26 @@
 </script>
 <script type="text/javascript">
 
-    var long, lat, coyoteCount;
-navigator.geolocation.getCurrentPosition((pos)=>{
-long = pos.coords.longitude;
-lat = pos.coords.latitude;
+    var longitude, latitude, coyoteCount;
+
+
+
+  
+
+  
+
 
 async function initMap() {
     // The location of Uluru
-    let position = { lat: lat, lng: long };
     // Request needed libraries.
     //@ts-ignore
     const { Map } = await google.maps.importLibrary("maps");
     const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
-
     // The map, centered at Uluru
     map = new Map(document.getElementById("map"), {
       zoom: 13,
-      center: position,
-      mapId: "DEMO_MAP_ID",
+      center: { lat: latitude, lng: longitude },
+      mapId: "coyoteMap",
     });
 
     // The marker, positioned at Uluru
@@ -65,6 +67,7 @@ async function initMap() {
       coyoteCount = coyotes.length;
 
       coyotes.forEach((coyote, i) => {
+        console.log(coyote)
           new AdvancedMarkerElement({
             map: map,
             position: {
@@ -75,12 +78,19 @@ async function initMap() {
           })
 
       })
-      map.center={lat: coyote.latitude, lng: coyote.longitude};
     })
   }
 
   
-
+function getLocation(){
+    navigator.geolocation.getCurrentPosition((pos)=>{
+    longitude = pos.coords.longitude;
+    latitude = pos.coords.latitude;
+    window.localStorage.setItem('long', longitude);
+    window.localStorage.setItem('lat', latitude);
+    return latitude && longitude;
+})
+}
 
 
  
@@ -89,13 +99,18 @@ async function initMap() {
     // Make sure to preventDefault on a submit event.
     event.preventDefault();
 
+navigator.geolocation.getCurrentPosition((pos)=>{
+longitude = pos.coords.longitude;
+latitude = pos.coords.latitude;
+  });
 
+if(latitude && longitude){
     var newcoyote = {
-      coyoteName: `coyote${coyoteCount}`,
-      longitude: long,
-      latitude: lat,
+      coyoteName: `coyote${coyoteCount+1}`,
+      longitude: longitude,
+      latitude: latitude,
       dtime: Date.now(),
-      active: true
+      active: 1
     };
 
       // Send the POST request.
@@ -103,18 +118,27 @@ async function initMap() {
         type: "POST",
         data: newcoyote
       }).then(
-        function () {
+        function (response) {
           console.log("added new coyote");
+          console.log(response);
           // Reload the page to get the updated list
           initMap();
         }
       );
-})
+    }
+  })
 
+initMap(getLocation())
 
-   initMap();
-  });
 /*
+var callbacks = $.Callbacks();
+callbacks.add(getLocation);
+callbacks.fire();
+callbacks.add(initMap);
+callbacks.fire();
+
+/*
+   $.when( getCurrentLocation() ).done((a)=>{console.log(a)})
     $("#updatecoyote").on("submit", function(event) {
       // Make sure to preventDefault on a submit event.
       event.preventDefault();
