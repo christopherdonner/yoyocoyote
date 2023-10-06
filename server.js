@@ -10,7 +10,7 @@ const https = require('https');
 const fs = require('fs');
 // Set the port of our application
 // process.env.PORT lets the port be set by Heroku
-var PORT = process.env.PORT || 8080;
+var PORT = process.env.PORT || 8443;
 var keys = require("./keys");
 
 var key = fs.readFileSync(__dirname + '/selfsigned.key');
