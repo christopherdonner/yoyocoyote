@@ -29,7 +29,7 @@ var exphbs = require("express-handlebars");
 app.engine("handlebars", exphbs({ defaultLayout: "main" }));
 app.set("view engine", "handlebars");
 
-var mysql = require("mysql"),
+var mysql = require("mysql");
 
 if(process.env.JAWSDB_URL){
   connection=mysql.createConnection(process.env.JAWSDB_URL);
