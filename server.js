@@ -32,11 +32,11 @@ app.set("view engine", "handlebars");
 var mysql = require("mysql"),
 
   connection = mysql.createConnection({
-  host: "localhost",
+  host: "ik1eybdutgxsm0lo.cbetxkdyhwsb.us-east-1.rds.amazonaws.com",
   port: 3306,
-  user: "root",
-  password: "P@ssw0rd",
-  database: "coyote_db"
+  user: "bwyuv8k63yzoqnfk",
+  password: "vwbztu1besejubwy",
+  database: "xne6rzwif22ragpq"
 });
   
 connection.connect(function(err) {
