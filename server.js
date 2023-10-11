@@ -31,13 +31,19 @@ app.set("view engine", "handlebars");
 
 var mysql = require("mysql"),
 
+if(process.env.JAWSDB_URL){
+  connection=mysql.createConnection(process.env.JAWSDB_URL);
+} else {
   connection = mysql.createConnection({
-  host: "ik1eybdutgxsm0lo.cbetxkdyhwsb.us-east-1.rds.amazonaws.com",
-  port: 3306,
-  user: "bwyuv8k63yzoqnfk",
-  password: "vwbztu1besejubwy",
-  database: "xne6rzwif22ragpq"
-});
+    host: "ik1eybdutgxsm0lo.cbetxkdyhwsb.us-east-1.rds.amazonaws.com",
+    port: 3306,
+    user: "bwyuv8k63yzoqnfk",
+    password: "vwbztu1besejubwy",
+    database: "xne6rzwif22ragpq"
+  });
+}
+
+  
   
 connection.connect(function(err) {
   if (err) {
