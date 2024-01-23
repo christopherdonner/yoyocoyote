@@ -31,6 +31,7 @@ app.set("view engine", "handlebars");
 
 var mysql = require("mysql"),
 
+
   connection = mysql.createConnection({
   host: "localhost",
   port: 3306,
@@ -76,6 +77,8 @@ app.post("/Coyotes", function(req, res) {
     // Send back the ID of the new coyote
     res.json({ result });
     console.log({ id: result.insertId });
+console.log('stuff');
+
   });
 });
 
