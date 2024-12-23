@@ -29,17 +29,17 @@ var exphbs = require("express-handlebars");
 app.engine("handlebars", exphbs({ defaultLayout: "main" }));
 app.set("view engine", "handlebars");
 
-var mysql = require("mysql");
+var mysql = require("mysql2");
 
 if(process.env.JAWSDB_URL){
   connection=mysql.createConnection(process.env.JAWSDB_URL);
 } else {
   connection = mysql.createConnection({
-    host: "ik1eybdutgxsm0lo.cbetxkdyhwsb.us-east-1.rds.amazonaws.com",
+    host: "localhost",
     port: 3306,
-    user: "bwyuv8k63yzoqnfk",
-    password: "vwbztu1besejubwy",
-    database: "xne6rzwif22ragpq"
+    user: "root",
+    password: "password",
+    database: "coyote_db"
   });
 }
 
