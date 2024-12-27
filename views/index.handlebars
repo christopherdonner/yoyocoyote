@@ -1,7 +1,14 @@
-<div class="jumbotron">
-  <h1 style="color: white; text-align:center">YoYoCoyote</h1>
-
-</div>
+<header>
+  <nav>
+            <ol>
+                <li><Link to="/" className="nav-item">Homepage</Link></li>
+                <li><Link to="/about" className="nav-item">About</Link></li>
+                <li><Link to="/track" className="nav-item">Menu</Link></li>
+                <li><Link to="/report" className="nav-item">Reservations</Link></li>
+                <li><Link to="/login" className="nav-item">Login</Link></li>
+            </ol>
+        </nav>
+</header>
 
 <div class="container">
   
@@ -46,15 +53,16 @@
 
 
 async function initMap() {
-    // The location of Uluru
-    // Request needed libraries.
+  console.log(location);
+  let newLocation = await getLocation();
+  console.log(newLocation);
     //@ts-ignore
     const { Map } = await google.maps.importLibrary("maps");
     const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
     // The map, centered at Uluru
     map = new Map(document.getElementById("map"), {
-      zoom: 13,
-      center: { lat: latitude, lng: longitude },
+      zoom: 14,
+      center: { lat: parseFloat(latitude), lng: parseFloat(longitude) },
       mapId: "coyoteMap",
     });
 
@@ -82,7 +90,7 @@ async function initMap() {
   }
 
   
-function getLocation(){
+async function getLocation(){
     navigator.geolocation.getCurrentPosition((pos)=>{
     longitude = pos.coords.longitude;
     latitude = pos.coords.latitude;
@@ -122,7 +130,9 @@ if(latitude && longitude){
           console.log("added new coyote");
           console.log(response);
           // Reload the page to get the updated list
-          initMap();
+          latitude = response.latitude;
+          longitude = response.longitude;
+          initMap(getLocation());
         }
       );
     }
