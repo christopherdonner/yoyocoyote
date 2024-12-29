@@ -46,13 +46,14 @@
     var longitude, latitude, coyoteCount;
 
 
+localStorage.getItem('lat') ? latitude = localStorage.getItem('lat') : null;
+  localStorage.getItem('long') ? longitude = localStorage.getItem('long') : null;
+
 
   
 
-  
 
-
-async function initMap() {
+async function initMap(location) {
   console.log(location);
   let newLocation = await getLocation();
   console.log(newLocation);
@@ -79,8 +80,8 @@ async function initMap() {
           new AdvancedMarkerElement({
             map: map,
             position: {
-              lat: coyote.latitude,
-              lng: coyote.longitude
+              lat: parseFloat(coyote.latitude),
+              lng: parseFloat(coyote.longitude)
             },
             title: coyote.coyoteName
           })
@@ -132,7 +133,7 @@ if(latitude && longitude){
           // Reload the page to get the updated list
           latitude = response.latitude;
           longitude = response.longitude;
-          initMap(getLocation());
+          initMap(latitude && longitude);
         }
       );
     }
