@@ -1,30 +1,17 @@
-  div#map {
-  height: 100%;
-  overflow: unset;
-  position: relative;
-  border: blue 2px solid;
-}
-
-html,
-body {
+body, div.container, div.row {
+  background-color: lightslategray;
   height: 100%;
   margin: 0;
   padding: 0;
 }
 
-header {
-  display: flex;
-  flex-direction: column;
-
+div#map {
+  overflow: unset;
+  min-height: 400px;
+  max-height: 600px;
+  height: 400px;
+  width: 600px;
 }
-
-nav {
-}
-
-nav ol {
-  
-}
-
-gmp-advanced-marker {
-  background-color: yellow;
+button {
+width: 100%;
 }

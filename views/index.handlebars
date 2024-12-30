@@ -11,32 +11,8 @@
 </header>
 
 <div class="container">
-  
-  <div class="row">
-    <div class="col-lg-2">
-      {{!-- <ul>
-        {{#each coyotes}}
-        <li>
-          <p>
-            {{this.id}}. {{this.coyoteName}}
-
-            <button data-coyotid="{{this.id}}" class="eatcoyote btn btn-warning">Deactivate</button>
-          </p>
-        </li>
-        {{/each}}
-      </ul> --}}
-    </div> {{!--end of column 1--}}
-    <div class="col-lg-10">
-      
-      {{!-- <div class="row"> --}}
-      {{!-- </div> --}}
         <button type="submit" class="btn btn-danger" id="coyoteButton">Report a Coyote Sighting!</button>
     <div id="map" style="height: 100%;"></div>
-    
-    </div>
-    
-  </div> {{!--end of row--}}
-
 </div> {{!-- end of container --}}
 <script>
 
@@ -57,7 +33,7 @@ async function initMap() {
     const { Map } = await google.maps.importLibrary("maps");
     const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
     map = new Map(document.getElementById("map"), {
-      zoom: 14,
+      zoom: 10,
       center: { lat: parseFloat(latitude), lng: parseFloat(longitude) },
       mapId: "coyoteMap",
     });
