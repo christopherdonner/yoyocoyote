@@ -53,22 +53,15 @@ localStorage.getItem('lat') ? latitude = localStorage.getItem('lat') : null;
   
 
 
-async function initMap(location) {
-  console.log(location);
-  let newLocation = await getLocation();
-  console.log(newLocation);
-    //@ts-ignore
+async function initMap() {
     const { Map } = await google.maps.importLibrary("maps");
     const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
-    // The map, centered at Uluru
     map = new Map(document.getElementById("map"), {
       zoom: 14,
       center: { lat: parseFloat(latitude), lng: parseFloat(longitude) },
       mapId: "coyoteMap",
     });
 
-    // The marker, positioned at Uluru
-  
 
     $.ajax("/coyotes", {
       type: "GET",
@@ -91,7 +84,7 @@ async function initMap(location) {
   }
 
   
-async function getLocation(){
+function getLocation(){
     navigator.geolocation.getCurrentPosition((pos)=>{
     longitude = pos.coords.longitude;
     latitude = pos.coords.latitude;
@@ -109,8 +102,7 @@ async function getLocation(){
     event.preventDefault();
 
 navigator.geolocation.getCurrentPosition((pos)=>{
-longitude = pos.coords.longitude;
-latitude = pos.coords.latitude;
+
   });
 
 if(latitude && longitude){
@@ -131,15 +123,13 @@ if(latitude && longitude){
           console.log("added new coyote");
           console.log(response);
           // Reload the page to get the updated list
-          latitude = response.latitude;
-          longitude = response.longitude;
-          initMap(latitude && longitude);
+          initMap();
         }
       );
     }
   })
 
-initMap(getLocation())
+initMap();
 
 /*
 var callbacks = $.Callbacks();
