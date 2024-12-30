@@ -1,7 +1,7 @@
   div#map {
   height: 100%;
   overflow: unset;
-  position: relative;
+  position: absolute;
   border: blue 2px solid;
 }
 
@@ -14,11 +14,11 @@ body {
 
 header {
   display: flex;
-  flex-direction: column;
-
 }
 
 nav {
+  display: flex;
+  flex-direction: column;
 }
 
 nav ol {
