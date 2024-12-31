@@ -1,98 +1,109 @@
 <header>
-  <nav  >
-            <ol style="">
-                <li><Link to="/" className="nav-item">Homepage</Link></li>
-                <li><Link to="/about" className="nav-item">About</Link></li>
-                <li><Link to="/track" className="nav-item">Tracking</Link></li>
-                <li><Link to="/reports" className="nav-item">My Coyotes</Link></li>
-                <li><Link to="/login" className="nav-item">Login</Link></li>
-            </ol>
-        </nav>
+  <nav>
+    <ol style="">
+      <li>
+        <Link to="/" className="nav-item">Homepage</Link>
+      </li>
+      <li>
+        <Link to="/about" className="nav-item">About</Link>
+      </li>
+      <li>
+        <Link to="/track" className="nav-item">Tracking</Link>
+      </li>
+      <li>
+        <Link to="/reports" className="nav-item">My Coyotes</Link>
+      </li>
+      <li>
+        <Link to="/login" className="nav-item">Login</Link>
+      </li>
+    </ol>
+  </nav>
 </header>
 
 <div class="container">
-        <button type="submit" class="btn btn-danger" id="coyoteButton">Report a Coyote Sighting!</button>
-    <div id="map" style="height: 100%;"></div>
+  <button type="submit" class="btn btn-danger" id="coyoteButton">Report a Coyote Sighting!</button>
+  <div id="map" style="height: 100%;"></div>
 </div> {{!-- end of container --}}
 <script>
 
 </script>
 <script type="text/javascript">
 
-    var longitude, latitude, coyoteCount;
+  var longitude, latitude, coyoteCount;
 
 
-localStorage.getItem('lat') ? latitude = localStorage.getItem('lat') : null;
+  localStorage.getItem('lat') ? latitude = localStorage.getItem('lat') : null;
   localStorage.getItem('long') ? longitude = localStorage.getItem('long') : null;
 
 
-  
 
 
-async function initMap() {
+
+  async function initMap() {
     const { Map } = await google.maps.importLibrary("maps");
-    const { AdvancedMarkerElement, PinElement  } = await google.maps.importLibrary("marker");
+    const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker");
     map = new Map(document.getElementById("map"), {
       zoom: 12,
       center: { lat: parseFloat(latitude), lng: parseFloat(longitude) },
       mapId: "coyoteMap",
+      mapTypeId: 'satellite'
     });
 
 
     $.ajax("/coyotes", {
       type: "GET",
     }).then((coyotes) => {
-          const pinBackground = new PinElement({
+      const pinBackground = new PinElement({
         background: '#FBBC04',
-    });
+      });
       coyoteCount = coyotes.length;
 
       coyotes.forEach((coyote, i) => {
         console.log(coyote)
-          new AdvancedMarkerElement({
-            map: map,
-            position: {
-              lat: parseFloat(coyote.latitude),
-              lng: parseFloat(coyote.longitude),
-              content: pinBackground
-            },
-            title: coyote.coyoteName
-          })
+        new AdvancedMarkerElement({
+          map: map,
+          position: {
+            lat: parseFloat(coyote.latitude),
+            lng: parseFloat(coyote.longitude),
+            content: pinBackground
+          },
+          title: coyote.coyoteName
+        })
 
       })
     })
   }
 
-  
-function getLocation(){
-    navigator.geolocation.getCurrentPosition((pos)=>{
-    longitude = pos.coords.longitude;
-    latitude = pos.coords.latitude;
-    window.localStorage.setItem('long', longitude);
-    window.localStorage.setItem('lat', latitude);
-    return latitude && longitude;
-})
-}
+
+  function getLocation() {
+    navigator.geolocation.getCurrentPosition((pos) => {
+      longitude = pos.coords.longitude;
+      latitude = pos.coords.latitude;
+      window.localStorage.setItem('long', longitude);
+      window.localStorage.setItem('lat', latitude);
+      return latitude && longitude;
+    })
+  }
 
 
- 
+
   // add coyotes
   $("#coyoteButton").on("click", function (event) {
     // Make sure to preventDefault on a submit event.
     event.preventDefault();
 
-navigator.geolocation.getCurrentPosition((pos)=>{
+    navigator.geolocation.getCurrentPosition((pos) => {
 
-  });
+    });
 
-if(latitude && longitude){
-    var newcoyote = {
-      coyoteName: `coyote${coyoteCount+1}`,
-      longitude: longitude,
-      latitude: latitude,
-      dtime: Date.now(),
-      active: 1
-    };
+    if (latitude && longitude) {
+      var newcoyote = {
+        coyoteName: `coyote${coyoteCount + 1}`,
+        longitude: longitude,
+        latitude: latitude,
+        dtime: Date.now(),
+        active: 1
+      };
 
       // Send the POST request.
       $.ajax("/coyotes", {
@@ -109,53 +120,53 @@ if(latitude && longitude){
     }
   })
 
-initMap();
+  initMap();
 
-/*
-var callbacks = $.Callbacks();
-callbacks.add(getLocation);
-callbacks.fire();
-callbacks.add(initMap);
-callbacks.fire();
-
-/*
-   $.when( getCurrentLocation() ).done((a)=>{console.log(a)})
-    $("#updatecoyote").on("submit", function(event) {
-      // Make sure to preventDefault on a submit event.
-      event.preventDefault();
+  /*
+  var callbacks = $.Callbacks();
+  callbacks.add(getLocation);
+  callbacks.fire();
+  callbacks.add(initMap);
+  callbacks.fire();
   
-      var id = $("[name=id]").val().trim();
-  
-      var updatedcoyote = {
-        coyote: $("#updatecoyote [name=coyote]").val().trim()
-      };
-  
-      // Send the PUT request.
-      $.ajax("/coyotes/" + id, {
-        type: "PUT",
-        data: updatedcoyote
-      }).then(
-        function() {
-          console.log("updated id ", id);
-          // Reload the page to get the updated list
-          location.reload();
-        }
-      );
-    });
-    */
+  /*
+     $.when( getCurrentLocation() ).done((a)=>{console.log(a)})
+      $("#updatecoyote").on("submit", function(event) {
+        // Make sure to preventDefault on a submit event.
+        event.preventDefault();
+    
+        var id = $("[name=id]").val().trim();
+    
+        var updatedcoyote = {
+          coyote: $("#updatecoyote [name=coyote]").val().trim()
+        };
+    
+        // Send the PUT request.
+        $.ajax("/coyotes/" + id, {
+          type: "PUT",
+          data: updatedcoyote
+        }).then(
+          function() {
+            console.log("updated id ", id);
+            // Reload the page to get the updated list
+            location.reload();
+          }
+        );
+      });
+      */
 </script>
 
 {{!-- <style>
-    div#map {
-  height: 100%;
-  overflow: unset;
-  position: absolute;
-}
+  div#map {
+    height: 100%;
+    overflow: unset;
+    position: absolute;
+  }
 
-html,
-body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-}
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
 </style>> --}}
