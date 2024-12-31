@@ -1,6 +1,6 @@
 <header>
-  <nav>
-            <ol>
+  <nav  >
+            <ol style="display:flex;flex-direction:row;list-decoration:none;padding:10px">
                 <li><Link to="/" className="nav-item">Homepage</Link></li>
                 <li><Link to="/about" className="nav-item">About</Link></li>
                 <li><Link to="/track" className="nav-item">Menu</Link></li>
@@ -33,7 +33,7 @@ async function initMap() {
     const { Map } = await google.maps.importLibrary("maps");
     const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
     map = new Map(document.getElementById("map"), {
-      zoom: 10,
+      zoom: 12,
       center: { lat: parseFloat(latitude), lng: parseFloat(longitude) },
       mapId: "coyoteMap",
     });

@@ -6,12 +6,13 @@ body, div.container, div.row {
 }
 
 div#map {
-  overflow: unset;
+  padding: 20px;
+  overflow: hidden;
+  height: 100%;
   min-height: 400px;
   max-height: 600px;
-  height: 400px;
-  width: 600px;
 }
+
 button {
 width: 100%;
 }
