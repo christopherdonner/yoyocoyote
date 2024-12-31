@@ -1,10 +1,10 @@
 <header>
   <nav  >
-            <ol style="display:flex;flex-direction:row;list-decoration:none;padding:10px">
+            <ol style="">
                 <li><Link to="/" className="nav-item">Homepage</Link></li>
                 <li><Link to="/about" className="nav-item">About</Link></li>
-                <li><Link to="/track" className="nav-item">Menu</Link></li>
-                <li><Link to="/report" className="nav-item">Reservations</Link></li>
+                <li><Link to="/track" className="nav-item">Tracking</Link></li>
+                <li><Link to="/reports" className="nav-item">My Coyotes</Link></li>
                 <li><Link to="/login" className="nav-item">Login</Link></li>
             </ol>
         </nav>
@@ -31,7 +31,7 @@ localStorage.getItem('lat') ? latitude = localStorage.getItem('lat') : null;
 
 async function initMap() {
     const { Map } = await google.maps.importLibrary("maps");
-    const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
+    const { AdvancedMarkerElement, PinElement  } = await google.maps.importLibrary("marker");
     map = new Map(document.getElementById("map"), {
       zoom: 12,
       center: { lat: parseFloat(latitude), lng: parseFloat(longitude) },
@@ -42,6 +42,9 @@ async function initMap() {
     $.ajax("/coyotes", {
       type: "GET",
     }).then((coyotes) => {
+          const pinBackground = new PinElement({
+        background: '#FBBC04',
+    });
       coyoteCount = coyotes.length;
 
       coyotes.forEach((coyote, i) => {
@@ -50,7 +53,8 @@ async function initMap() {
             map: map,
             position: {
               lat: parseFloat(coyote.latitude),
-              lng: parseFloat(coyote.longitude)
+              lng: parseFloat(coyote.longitude),
+              content: pinBackground
             },
             title: coyote.coyoteName
           })
