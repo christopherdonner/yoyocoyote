@@ -1,4 +1,3 @@
 ./node_modules
-./views/main.handlebars
 ./.env
-./views/layouts/
+./views/layouts/main.handlebars
