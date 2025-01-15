@@ -23,10 +23,10 @@ div#map {
   overflow: hidden;
   height: 100%;
   min-height: 400px;
-  max-height: 600px;
+  /* max-height: 600px; */
   top: 0px;
   position: relative;
-  height: 1000px;
+  /* height: 1000px; */
   margin: 0px 10px 0px 10px;
 }
 
