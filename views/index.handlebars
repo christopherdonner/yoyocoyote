@@ -43,6 +43,8 @@
 </script>
 <script type="text/javascript">
 
+document.addEventListener("load", getLocation());
+
   var longitude, latitude, coyoteCount;
 
   localStorage.getItem('lat') ? latitude = localStorage.getItem('lat') : null;
