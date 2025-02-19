@@ -16,6 +16,9 @@ nav ol {
 ol li {
   padding: 10px;
   margin: 10px;
+  border: 2px grey solid;
+  border-radius: 8px;
+  
 }
 
 div#map {

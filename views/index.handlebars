@@ -53,6 +53,13 @@ document.addEventListener("load", getLocation());
   async function initMap() {
     const { Map } = await google.maps.importLibrary("maps");
     const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker");
+      let coyotePin = document.createElement('img');
+
+
+            
+
+coyotePin.textContent = "Coyote #";
+
     map = new Map(document.getElementById("map"), {
       zoom: 12,
       center: { lat: parseFloat(latitude), lng: parseFloat(longitude) },
@@ -63,16 +70,13 @@ document.addEventListener("load", getLocation());
     $.ajax("/coyotes", {
       type: "GET",
     }).then((coyotes) => {
-      const coyotePin = document.createElement('img');
 
             coyoteCount = coyotes.length;
 
-
-      coyotes.forEach((coyote, i) => {
-        console.log(coyote);
-            coyotePin.src = "./coyote.png";
-coyotePin.textContent = coyote.coyoteName;
-
+for(const coyote of coyotes){
+  console.log(coyote)
+  coyotePin.textContent +=coyote.coyoteName;
+coyotePin.src = "./coyote.png";
         new AdvancedMarkerElement({
           map: map,
           position: {
@@ -83,8 +87,8 @@ coyotePin.textContent = coyote.coyoteName;
             content: coyotePin
 
         })
-
-      })
+}
+      
     })
   }
 
