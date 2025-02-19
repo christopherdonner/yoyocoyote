@@ -110,9 +110,8 @@ coyotePin.src = "./coyote.png";
     // Make sure to preventDefault on a submit event.
     event.preventDefault();
 
-    navigator.geolocation.getCurrentPosition((pos) => {
-
-    });
+    // navigator.geolocation.getCurrentPosition((pos) => {    });
+    navigator.vibrate(300);
 
     if (latitude && longitude) {
       var newcoyote = {
