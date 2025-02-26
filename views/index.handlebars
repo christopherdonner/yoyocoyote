@@ -43,7 +43,7 @@
 </script>
 <script type="text/javascript">
 
-document.addEventListener("load", getLocation());
+  document.addEventListener("load", () => { initMap(); });
 
   var longitude, latitude, coyoteCount;
 
@@ -51,17 +51,17 @@ document.addEventListener("load", getLocation());
   localStorage.getItem('long') ? longitude = localStorage.getItem('long') : null;
 
   async function initMap() {
-    const { Map } = await google.maps.importLibrary("maps");
-    const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker");
-      let coyotePin = document.createElement('img');
+    const { Map } = await google.maps.importLibrary("maps"),
+          { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker"),
+          location = await getLocation(),
+          coyotePin = document.createElement('img');
 
+console.log(location);
 
-            
-
-coyotePin.textContent = "Coyote #";
+    coyotePin.src = "./coyote.png";
 
     map = new Map(document.getElementById("map"), {
-      zoom: 12,
+      zoom: 16,
       center: { lat: parseFloat(latitude), lng: parseFloat(longitude) },
       mapId: "coyoteMap",
     });
@@ -71,12 +71,11 @@ coyotePin.textContent = "Coyote #";
       type: "GET",
     }).then((coyotes) => {
 
-            coyoteCount = coyotes.length;
+      coyoteCount = coyotes.length;
 
-for(const coyote of coyotes){
-  console.log(coyote)
-  coyotePin.textContent +=coyote.coyoteName;
-coyotePin.src = "./coyote.png";
+      for (const coyote of coyotes) {
+        console.log(coyote)
+        coyotePin.textContent += coyote.coyoteName;
         new AdvancedMarkerElement({
           map: map,
           position: {
@@ -84,11 +83,11 @@ coyotePin.src = "./coyote.png";
             lng: parseFloat(coyote.longitude),
           },
           title: coyote.coyoteName,
-            content: coyotePin
+          content: coyotePin
 
         })
-}
-      
+      }
+
     })
   }
 
@@ -111,8 +110,8 @@ coyotePin.src = "./coyote.png";
     event.preventDefault();
 
     // navigator.geolocation.getCurrentPosition((pos) => {    });
+    setTimeout(getLocation(), 300);
     navigator.vibrate(300);
-
     if (latitude && longitude) {
       var newcoyote = {
         coyoteName: `coyote${coyoteCount + 1}`,
@@ -139,51 +138,4 @@ coyotePin.src = "./coyote.png";
 
   initMap();
 
-  /*
-  var callbacks = $.Callbacks();
-  callbacks.add(getLocation);
-  callbacks.fire();
-  callbacks.add(initMap);
-  callbacks.fire();
-  
-  /*
-     $.when( getCurrentLocation() ).done((a)=>{console.log(a)})
-      $("#updatecoyote").on("submit", function(event) {
-        // Make sure to preventDefault on a submit event.
-        event.preventDefault();
-    
-        var id = $("[name=id]").val().trim();
-    
-        var updatedcoyote = {
-          coyote: $("#updatecoyote [name=coyote]").val().trim()
-        };
-    
-        // Send the PUT request.
-        $.ajax("/coyotes/" + id, {
-          type: "PUT",
-          data: updatedcoyote
-        }).then(
-          function() {
-            console.log("updated id ", id);
-            // Reload the page to get the updated list
-            location.reload();
-          }
-        );
-      });
-      */
 </script>
-
-{{!-- <style>
-  div#map {
-    height: 100%;
-    overflow: unset;
-    position: absolute;
-  }
-
-  html,
-  body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-  }
-</style>> --}}
