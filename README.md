@@ -8,8 +8,10 @@ Collectively, we can accurately track movement of coyotes in the region for cons
 Coyote sightings can be reported from phones, via yoyocoyte.ca, using location services or retroactively on a computer or tablet.
 Information collected here will be shared with the Region of Waterloo, the University of Waterloo, Wilfred Laurier University and the University of Guelph.
 Mobile:
-![image](https://github.com/user-attachments/assets/71425062-8683-4af4-ab23-6f571653e7af)
+![image](https://github.com/user-attachments/assets/c441fa69-dd15-4a6b-b4cc-867ddffd9dc7)
+
 
 Desktop:
-![image](https://github.com/christopherdonner/yoyocoyote/assets/43712817/58597594-e5eb-4f2c-957d-20a6f57a800b)
+![image](https://github.com/user-attachments/assets/2f7e9f05-3066-4971-a33b-48465b3bbf83)
+
 
