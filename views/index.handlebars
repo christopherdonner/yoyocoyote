@@ -1,43 +1,66 @@
-<header>
-  <nav>
-    <ol style="">
-      <li>
-        <Link to="/" className="nav-item">Homepage</Link>
-      </li>
-      <li>
-        <Link to="/about" className="nav-item">About</Link>
-      </li>
-      <li>
-        <Link to="/track" className="nav-item">Tracking</Link>
-      </li>
-      <li>
-        <Link to="/reports" className="nav-item">My Coyotes</Link>
-      </li>
-      <li>
-        <Link to="/login" className="nav-item">Login</Link>
-      </li>
-    </ol>
+<header class="site-header">
+  <a class="site-brand" href="/" aria-label="YoYoCoyote home">
+    <span class="brand-mark" aria-hidden="true">Y</span>
+    <span><strong>YoYoCoyote</strong><small>REGION OF WATERLOO</small></span>
+  </a>
+  <nav class="site-nav" aria-label="Main navigation">
+    <a href="/about">About</a>
+    {{#if user}}
+      <a href="/reports">My reports</a>
+      <form action="/logout" method="post">
+        <input type="hidden" name="_csrf" value="{{csrfToken}}">
+        <button type="submit" class="nav-action">Log out</button>
+      </form>
+    {{else}}
+      <a href="/login">Log in</a>
+      <a href="/signup" class="nav-signup">Create account</a>
+    {{/if}}
   </nav>
 </header>
 
-<div class="container">
-  {{!-- <article>
-    <p>
-      YoYoCoyote is a crowd sourced wild-life tracking platform.
-      with the ever increasing presence of coyotes in urban areas in the region of Waterloo, YoYoCoyote aims to map and
-      track reported sightings in the area.
-      Collectively, we can accurately track movement of coyotes in the region for conservation, education and safety for
-      humans and coyotes alike.
-      Coyote sightings can be reported from phones, via yoyocoyte.ca, using location services or retroactively on a
-      computer or tablet.
+<main class="map-page">
+  <section class="map-toolbar" aria-label="Coyote sighting map controls">
+    <div class="map-heading">
+      <p class="eyebrow">COMMUNITY SIGHTINGS</p>
+      <h1>Coyote activity map</h1>
+    </div>
+    <div class="report-controls">
+      <p id="reportStatus" class="report-status" role="status" aria-live="polite">Reports fade over 100 hours.</p>
+      <button type="button" class="report-button" id="coyoteButton">
+        <span class="report-plus" aria-hidden="true">+</span>
+        <span>Report a coyote</span>
+      </button>
+    </div>
+  </section>
+  <div id="map" class="map-canvas" role="region" aria-label="Map of community coyote sightings"></div>
+</main>
 
-      Information collected here will be shared with the Region of Waterloo, the University of Waterloo, Wilfred Laurier
-      University and the University of Guelph.
-    </p>
-  </article> --}}
-  <button type="submit" class="btn btn-danger" id="coyoteButton">Report a Coyote Sighting!</button>
-  <div id="map" style="height: 100%;"></div>
-</div> {{!-- end of container --}}
+<dialog class="report-dialog" id="reportDialog" aria-labelledby="reportDialogTitle">
+  <form class="report-form" id="reportForm">
+    <p class="eyebrow">NEW COMMUNITY SIGHTING</p>
+    <h2 id="reportDialogTitle">Add a coyote report</h2>
+    <p class="dialog-location" id="reportLocationStatus">Location captured.</p>
+
+    <label for="reportDetails">Would you like to include any details? <span>Optional</span></label>
+    <textarea id="reportDetails" name="details" maxlength="1000" rows="4" placeholder="For example: direction of travel, number of coyotes, or nearby landmark"></textarea>
+
+    <fieldset class="photo-fieldset">
+      <legend>Would you like to take a photo? <span>Optional</span></legend>
+      <input class="visually-hidden" id="reportPhoto" type="file" accept="image/*" capture="environment">
+      <button type="button" class="photo-pick-button" id="chooseReportPhoto">Take a photo / choose image</button>
+      <p class="photo-help">On supported phones, this opens the camera. Your image is resized before upload.</p>
+      <img class="photo-preview" id="reportPhotoPreview" alt="Preview of selected coyote report photo" hidden>
+      <button type="button" class="photo-remove" id="removeReportPhoto" hidden>Remove photo</button>
+    </fieldset>
+
+    <p class="dialog-status" id="reportFormStatus" role="status" aria-live="polite"></p>
+    <div class="dialog-actions">
+      <button type="button" class="dialog-cancel" id="cancelReport">Cancel</button>
+      <button type="submit" class="report-submit" id="submitReport">Submit report</button>
+    </div>
+  </form>
+</dialog>
+
 <script>
 
 </script>
@@ -46,37 +69,55 @@
   document.addEventListener("load", () => { initMap(); });
 
   var longitude, latitude, coyoteCount;
+  var csrfToken = '{{csrfToken}}';
+  var coyoteMarkers = [];
+  var mapMarkers = [];
+  var coyoteFadeTimer;
+  var coyoteLifetimeMs = 100 * 60 * 60 * 1000;
+  var maxPhotoBytes = 3 * 1024 * 1024;
+  var pendingReportLocation = null;
+  var photoDataUrl = '';
+  var photoPreviewUrl = '';
+  var map;
 
-  localStorage.getItem('lat') ? latitude = localStorage.getItem('lat') : null;
-  localStorage.getItem('long') ? longitude = localStorage.getItem('long') : null;
+  latitude = Number(localStorage.getItem('lat'));
+  longitude = Number(localStorage.getItem('long'));
+
+  function refreshCoyoteOpacity() {
+    var now = Date.now();
+    for (const marker of coyoteMarkers) {
+      var age = Math.max(0, now - marker.reportedAt);
+      marker.image.style.opacity = String(Math.max(0, 1 - age / coyoteLifetimeMs));
+    }
+  }
 
   async function initMap() {
     const { Map } = await google.maps.importLibrary("maps"),
-          { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker"),
-          location = await getLocation(),
-          coyotePin = document.createElement('img');
+          { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
+    const hasSavedLocation = Number.isFinite(latitude) && Number.isFinite(longitude);
 
-console.log(location);
+    if (!map) {
+      map = new Map(document.getElementById("map"), {
+        zoom: hasSavedLocation ? 14 : 12,
+        center: hasSavedLocation ? { lat: latitude, lng: longitude } : { lat: 43.4516, lng: -80.4925 },
+        mapId: "coyoteMap",
+      });
+    }
 
-    coyotePin.src = "./coyote.png";
-
-    map = new Map(document.getElementById("map"), {
-      zoom: 16,
-      center: { lat: parseFloat(latitude), lng: parseFloat(longitude) },
-      mapId: "coyoteMap",
-    });
-
-
-    $.ajax("/coyotes", {
-      type: "GET",
-    }).then((coyotes) => {
-
+    try {
+      const coyotes = await $.ajax("/coyotes", { type: "GET" });
       coyoteCount = coyotes.length;
+      coyoteMarkers = [];
+      mapMarkers.forEach((marker) => marker.map = null);
+      mapMarkers = [];
 
       for (const coyote of coyotes) {
-        console.log(coyote)
-        coyotePin.textContent += coyote.coyoteName;
-        new AdvancedMarkerElement({
+        const coyotePin = document.createElement('img');
+        coyotePin.src = "/coyote.png";
+        coyotePin.alt = coyote.coyoteName;
+        coyotePin.className = "coyote-marker";
+        coyoteMarkers.push({ image: coyotePin, reportedAt: Number(coyote.dtime) });
+        const marker = new AdvancedMarkerElement({
           map: map,
           position: {
             lat: parseFloat(coyote.latitude),
@@ -84,57 +125,217 @@ console.log(location);
           },
           title: coyote.coyoteName,
           content: coyotePin
-
-        })
+        });
+        marker.addListener('click', () => {
+          const content = document.createElement('div');
+          content.className = 'map-info';
+          const title = document.createElement('strong');
+          title.textContent = coyote.coyoteName || 'Coyote sighting';
+          content.appendChild(title);
+          if (coyote.details) {
+            const details = document.createElement('p');
+            details.textContent = coyote.details;
+            content.appendChild(details);
+          }
+          if (coyote.photo_mime) {
+            const photo = document.createElement('img');
+            photo.src = `/Coyotes/${encodeURIComponent(coyote.id)}/photo`;
+            photo.alt = 'Photo attached to this coyote report';
+            content.appendChild(photo);
+          }
+          const infoWindow = new google.maps.InfoWindow({ content });
+          infoWindow.open({ map, anchor: marker });
+        });
+        mapMarkers.push(marker);
       }
 
-    })
+      refreshCoyoteOpacity();
+      if (!coyoteFadeTimer) coyoteFadeTimer = setInterval(refreshCoyoteOpacity, 60 * 1000);
+    } catch (error) {
+      document.getElementById('reportStatus').textContent = 'Sightings could not be loaded. Please refresh the page.';
+      console.error('Unable to load coyote markers:', error);
+    }
   }
 
 
   function getLocation() {
-    navigator.geolocation.getCurrentPosition((pos) => {
-      longitude = pos.coords.longitude;
-      latitude = pos.coords.latitude;
-      window.localStorage.setItem('long', longitude);
-      window.localStorage.setItem('lat', latitude);
-      return latitude && longitude;
-    })
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) return reject(new Error('Location is not available in this browser.'));
+      navigator.geolocation.getCurrentPosition((position) => {
+        longitude = position.coords.longitude;
+        latitude = position.coords.latitude;
+        window.localStorage.setItem('long', longitude);
+        window.localStorage.setItem('lat', latitude);
+        resolve({ latitude, longitude });
+      }, reject, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+    });
   }
 
 
+  function compressReportPhoto(file) {
+    return createImageBitmap(file).then((bitmap) => new Promise((resolve, reject) => {
+      let scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+      const qualities = [0.82, 0.72, 0.62, 0.52];
+      let attempt = 0;
 
-  // add coyotes
-  $("#coyoteButton").on("click", function (event) {
-    // Make sure to preventDefault on a submit event.
-    event.preventDefault();
+      function encode() {
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+        canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+        canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            bitmap.close();
+            reject(new Error('This photo could not be processed. Try another image.'));
+            return;
+          }
+          if (blob.size <= maxPhotoBytes) {
+            bitmap.close();
+            resolve(blob);
+            return;
+          }
+          attempt += 1;
+          if (attempt >= qualities.length) {
+            bitmap.close();
+            reject(new Error('This photo is too large to attach. Choose a smaller image.'));
+            return;
+          }
+          scale *= 0.8;
+          encode();
+        }, 'image/jpeg', qualities[attempt]);
+      }
 
-    // navigator.geolocation.getCurrentPosition((pos) => {    });
-    setTimeout(getLocation(), 300);
-    navigator.vibrate(300);
-    if (latitude && longitude) {
-      var newcoyote = {
-        coyoteName: `coyote${coyoteCount + 1}`,
-        longitude: longitude,
-        latitude: latitude,
-        dtime: Date.now(),
-        active: 1
-      };
+      encode();
+    }));
+  }
 
-      // Send the POST request.
-      $.ajax("/coyotes", {
-        type: "POST",
-        data: newcoyote
-      }).then(
-        function (response) {
-          console.log("added new coyote");
-          console.log(response);
-          // Reload the page to get the updated list
-          initMap();
-        }
-      );
+  function blobToDataUrl(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('The photo could not be read.'));
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  const reportDialog = document.getElementById('reportDialog');
+  const reportForm = document.getElementById('reportForm');
+  const reportPhotoInput = document.getElementById('reportPhoto');
+  const reportPhotoPreview = document.getElementById('reportPhotoPreview');
+  const reportFormStatus = document.getElementById('reportFormStatus');
+
+  document.getElementById('chooseReportPhoto').addEventListener('click', () => reportPhotoInput.click());
+  document.getElementById('cancelReport').addEventListener('click', () => reportDialog.close());
+
+  reportPhotoInput.addEventListener('change', async () => {
+    const file = reportPhotoInput.files[0];
+    if (!file) return;
+    reportFormStatus.textContent = 'Preparing photo…';
+    try {
+      const compressed = await compressReportPhoto(file);
+      photoDataUrl = await blobToDataUrl(compressed);
+      if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+      photoPreviewUrl = URL.createObjectURL(compressed);
+      reportPhotoPreview.src = photoPreviewUrl;
+      reportPhotoPreview.hidden = false;
+      document.getElementById('removeReportPhoto').hidden = false;
+      reportFormStatus.textContent = 'Photo added.';
+    } catch (error) {
+      photoDataUrl = '';
+      reportPhotoInput.value = '';
+      reportFormStatus.textContent = error.message;
     }
-  })
+  });
+
+  document.getElementById('removeReportPhoto').addEventListener('click', () => {
+    photoDataUrl = '';
+    reportPhotoInput.value = '';
+    reportPhotoPreview.removeAttribute('src');
+    reportPhotoPreview.hidden = true;
+    document.getElementById('removeReportPhoto').hidden = true;
+    if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+    photoPreviewUrl = '';
+    reportFormStatus.textContent = 'Photo removed.';
+  });
+
+  $("#coyoteButton").on("click", async function (event) {
+    event.preventDefault();
+    const button = this;
+    const status = document.getElementById('reportStatus');
+    button.disabled = true;
+    status.textContent = 'Waiting for your location…';
+
+    try {
+      pendingReportLocation = await getLocation();
+      document.getElementById('reportLocationStatus').textContent = 'Location captured. You can add optional details or a photo before submitting.';
+      reportFormStatus.textContent = '';
+      reportDialog.showModal();
+    } catch (error) {
+      if (error.code === 1) status.textContent = 'Location permission was denied. Allow location access and try again.';
+      else if (error.code === 2) status.textContent = 'Your location could not be determined. Try again in a moment.';
+      else if (error.code === 3) status.textContent = 'Location lookup timed out. Try again.';
+      else status.textContent = error.responseJSON?.error || error.message || 'The report could not be saved. Please try again.';
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  reportForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!pendingReportLocation) {
+      reportFormStatus.textContent = 'Location is missing. Close this form and start again.';
+      return;
+    }
+
+    const submitButton = document.getElementById('submitReport');
+    submitButton.disabled = true;
+    reportFormStatus.textContent = 'Submitting report…';
+    try {
+      await $.ajax('/Coyotes', {
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+          coyoteName: `coyote${(coyoteCount || 0) + 1}`,
+          longitude: pendingReportLocation.longitude,
+          latitude: pendingReportLocation.latitude,
+          details: document.getElementById('reportDetails').value,
+          photoDataUrl
+        }),
+        headers: { 'X-CSRF-Token': csrfToken }
+      });
+      reportDialog.close();
+      reportForm.reset();
+      pendingReportLocation = null;
+      photoDataUrl = '';
+      reportPhotoPreview.removeAttribute('src');
+      reportPhotoPreview.hidden = true;
+      document.getElementById('removeReportPhoto').hidden = true;
+      if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+      photoPreviewUrl = '';
+      document.getElementById('reportStatus').textContent = 'Sighting reported. Thank you.';
+      if (navigator.vibrate) navigator.vibrate(100);
+      await initMap();
+    } catch (error) {
+      reportFormStatus.textContent = error.responseJSON?.error || 'The report could not be saved. Please try again.';
+    } finally {
+      submitButton.disabled = false;
+    }
+  });
+
+  reportDialog.addEventListener('close', () => {
+    if (pendingReportLocation) {
+      pendingReportLocation = null;
+      reportForm.reset();
+      photoDataUrl = '';
+      reportPhotoPreview.removeAttribute('src');
+      reportPhotoPreview.hidden = true;
+      document.getElementById('removeReportPhoto').hidden = true;
+      if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+      photoPreviewUrl = '';
+      reportFormStatus.textContent = '';
+      document.getElementById('reportStatus').textContent = 'Report cancelled. No information was submitted.';
+    }
+  });
 
   initMap();
 

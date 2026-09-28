@@ -1,0 +1,13 @@
+<main class="container">
+  <h1>{{user.username}}'s coyote reports</h1>
+  <p><a href="/">Back to map</a></p>
+  {{#if coyotes.length}}
+    <ul>
+      {{#each coyotes}}
+        <li>{{coyoteName}}: {{latitude}}, {{longitude}} ({{dtime}})</li>
+      {{/each}}
+    </ul>
+  {{else}}
+    <p>You have not submitted any reports yet.</p>
+  {{/if}}
+</main>
