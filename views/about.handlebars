@@ -1,0 +1,59 @@
+<header class="site-header">
+  <a class="site-brand" href="/" aria-label="YoYoCoyote home">
+    <span class="brand-mark" aria-hidden="true">Y</span>
+    <span><strong>YoYoCoyote</strong><small>REGION OF WATERLOO</small></span>
+  </a>
+  <nav class="site-nav" aria-label="Main navigation">
+    <a href="/">Map</a>
+    {{#if user}}
+      <a href="/reports">My reports</a>
+      <form action="/logout" method="post">
+        <input type="hidden" name="_csrf" value="{{csrfToken}}">
+        <button type="submit" class="nav-action">Log out</button>
+      </form>
+    {{else}}
+      <a href="/login">Log in</a>
+      <a href="/signup" class="nav-signup">Create account</a>
+    {{/if}}
+  </nav>
+</header>
+
+<main class="container about-page">
+  <section class="about-intro">
+    <div class="about-intro-copy">
+      <p class="about-kicker">A COMMUNITY WILDLIFE PROJECT</p>
+      <h1>Sharing the landscape with coyotes.</h1>
+      <p class="about-lede">
+        YoYoCoyote brings community-reported sightings together on a map of the Region of Waterloo, helping build a
+        clearer picture of local coyote activity.
+      </p>
+      <a class="about-cta" href="/">Explore the sightings map <span aria-hidden="true">&rarr;</span></a>
+    </div>
+    <figure class="about-image">
+      <img src="/coyote.jpg" alt="A coyote standing and looking toward the camera">
+      <figcaption>One shared map. Many community observations.</figcaption>
+    </figure>
+  </section>
+
+  <section class="about-section">
+    <p class="about-kicker">HOW IT WORKS</p>
+    <h2>Reports from the people who live here.</h2>
+    <p>
+      Anyone can report a sighting from the map, with or without an account. Reports are gathered in one place so
+      visitors can see community observations across the region. An account links your reports to you and gives you a
+      personal list to revisit.
+    </p>
+  </section>
+
+  <section class="about-section about-purpose">
+    <p class="about-kicker">THE PROJECT'S PURPOSE</p>
+    <h2>Better understanding through shared observations.</h2>
+    <p>
+      As described in the project README, YoYoCoyote aims to support conservation, education, and safety for people and
+      coyotes alike. The README also states that collected information is intended to be shared with the Region of
+      Waterloo, the University of Waterloo, Wilfrid Laurier University, and the University of Guelph.
+    </p>
+  </section>
+
+  <p class="about-note">Community sightings are observations, not emergency reports or official wildlife guidance.</p>
+</main>
