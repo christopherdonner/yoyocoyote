@@ -1,13 +1,48 @@
-<main class="container">
-  <h1>{{user.username}}'s coyote reports</h1>
-  <p><a href="/">Back to map</a></p>
+<header class="site-header">
+  <a class="site-brand" href="/" aria-label="YoYoCoyote home">
+    <span class="brand-mark" aria-hidden="true">Y</span>
+    <span><strong>YoYoCoyote</strong><small>REGION OF WATERLOO</small></span>
+  </a>
+  <nav class="site-nav" aria-label="Main navigation">
+    <a href="/">Map</a>
+    <a href="/about">About</a>
+    {{#if user.isAdmin}}<a href="/admin/reports">Admin</a>{{/if}}
+    <form action="/logout" method="post">
+      <input type="hidden" name="_csrf" value="{{csrfToken}}">
+      <button type="submit" class="nav-action">Log out</button>
+    </form>
+  </nav>
+</header>
+
+<main class="reports-page">
+  <p class="eyebrow">YOUR CONTRIBUTIONS</p>
+  <h1>My reports</h1>
   {{#if coyotes.length}}
-    <ul>
+    <ul class="report-list user-report-list">
       {{#each coyotes}}
-        <li>{{coyoteName}}: {{latitude}}, {{longitude}} ({{dtime}})</li>
+        <li class="user-report">
+          <div class="user-report-content">
+            <div class="user-report-heading">
+              <strong>{{coyoteName}}</strong>
+              <span class="report-state">{{#if active}}Active{{else}}Expired{{/if}}</span>
+            </div>
+            <p class="user-report-meta">{{reported_at}} <span aria-hidden="true">&middot;</span> {{latitude}}, {{longitude}}</p>
+            {{#if details}}<p class="user-report-details">{{details}}</p>{{/if}}
+            {{#if photo_mime}}
+              <a class="user-report-photo-link" href="/Coyotes/{{id}}/photo" target="_blank" rel="noopener">
+                <img class="user-report-photo" src="/Coyotes/{{id}}/photo" alt="Photo attached to {{coyoteName}}" loading="lazy">
+                <span>View photo</span>
+              </a>
+            {{/if}}
+          </div>
+          <form class="user-report-delete" action="/reports/{{id}}/delete" method="post" onsubmit="return confirm('Permanently delete this report and its photo?')">
+            <input type="hidden" name="_csrf" value="{{../csrfToken}}">
+            <button type="submit" class="admin-delete-button">Delete report</button>
+          </form>
+        </li>
       {{/each}}
     </ul>
   {{else}}
-    <p>You have not submitted any reports yet.</p>
+    <p class="reports-empty">You have not submitted any reports yet.</p>
   {{/if}}
 </main>

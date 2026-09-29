@@ -1,0 +1,60 @@
+<header class="site-header">
+  <a class="site-brand" href="/" aria-label="YoYoCoyote home">
+    <span class="brand-mark" aria-hidden="true">Y</span>
+    <span><strong>YoYoCoyote</strong><small>REGION OF WATERLOO</small></span>
+  </a>
+  <nav class="site-nav" aria-label="Main navigation">
+    <a href="/">Map</a>
+    <a href="/reports">My reports</a>
+    <form action="/logout" method="post">
+      <input type="hidden" name="_csrf" value="{{csrfToken}}">
+      <button type="submit" class="nav-action">Log out</button>
+    </form>
+  </nav>
+</header>
+
+<main class="admin-page">
+  <div class="admin-heading">
+    <div>
+      <p class="eyebrow">ADMINISTRATION</p>
+      <h1>Community reports</h1>
+    </div>
+    <p class="admin-count">{{coyotes.length}} total</p>
+  </div>
+
+  {{#if coyotes.length}}
+    <div class="admin-report-list">
+      {{#each coyotes}}
+        <article class="admin-report">
+          <div class="admin-report-main">
+            <div class="admin-report-title">
+              <h2>{{coyoteName}}</h2>
+              <span class="admin-state {{#if active}}is-active{{else}}is-expired{{/if}}">{{#if active}}Active{{else}}Inactive{{/if}}</span>
+            </div>
+            <p class="admin-report-meta">
+              <span>Report #{{id}}</span>
+              <span>By {{reported_by}}</span>
+              <time>{{reported_at}}</time>
+              <span>{{latitude}}, {{longitude}}</span>
+            </p>
+            {{#if details}}<p class="admin-report-details">{{details}}</p>{{else}}<p class="admin-report-details is-empty">No notes submitted.</p>{{/if}}
+            {{#if photo_mime}}
+              <a class="admin-photo-link" href="/Coyotes/{{id}}/photo" target="_blank" rel="noopener">
+                <img class="admin-photo" src="/Coyotes/{{id}}/photo" alt="Photo attached to report {{coyoteName}}" loading="lazy">
+                <span>Open full-size photo</span>
+              </a>
+            {{else}}
+              <p class="admin-no-photo">No photo attached</p>
+            {{/if}}
+          </div>
+          <form class="admin-delete-form" action="/admin/reports/{{id}}/delete" method="post" onsubmit="return confirm('Permanently delete this report and its photo?')">
+            <input type="hidden" name="_csrf" value="{{../csrfToken}}">
+            <button type="submit" class="admin-delete-button">Delete report</button>
+          </form>
+        </article>
+      {{/each}}
+    </div>
+  {{else}}
+    <p class="admin-empty">There are no coyote reports yet.</p>
+  {{/if}}
+</main>

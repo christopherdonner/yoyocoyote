@@ -88,9 +88,9 @@ app.use((req, res, next) => {
   if (!/^[a-f0-9]{64}$/.test(sessionToken)) return next();
 
   const tokenHash = crypto.createHash('sha256').update(sessionToken).digest('hex');
-  query('SELECT u.id, u.username FROM auth_sessions s JOIN app_users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.expires_at > UTC_TIMESTAMP()', [tokenHash])
+  query('SELECT u.id, u.username, EXISTS(SELECT 1 FROM app_admins a WHERE a.user_id = u.id) AS is_admin FROM auth_sessions s JOIN app_users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.expires_at > UTC_TIMESTAMP()', [tokenHash])
     .then(rows => {
-      if (rows[0]) req.user = { id: rows[0].id, username: rows[0].username };
+      if (rows[0]) req.user = { id: rows[0].id, username: rows[0].username, isAdmin: Boolean(rows[0].is_admin) };
       next();
     })
     .catch(error => {
@@ -150,6 +150,12 @@ function renderAuthForm(res, view, csrfToken, error = '') {
 
 function requireLogin(req, res, next) {
   if (!req.user) return res.status(401).redirect('/login');
+  next();
+}
+
+function requireAdmin(req, res, next) {
+  if (!req.user) return res.status(401).redirect('/login');
+  if (!req.user.isAdmin) return res.status(403).send('Administrator access required.');
   next();
 }
 
@@ -248,10 +254,45 @@ app.post('/logout', async (req, res) => {
 app.get('/reports', requireLogin, async (req, res) => {
   try {
     const coyotes = await query('SELECT id, coyoteName, longitude, latitude, dtime, active, details, photo_mime FROM coyotes WHERE userid = ? ORDER BY dtime DESC', [req.user.id]);
+    for (const coyote of coyotes) coyote.reported_at = new Date(Number(coyote.dtime)).toLocaleString();
     res.render('reports', { coyotes, user: req.user, csrfToken: req.csrfToken });
   } catch (error) {
     console.error('Unable to load user reports:', error.message);
     res.status(500).send('Unable to load your reports.');
+  }
+});
+
+app.post('/reports/:id/delete', requireLogin, async (req, res) => {
+  try {
+    const result = await query('DELETE FROM coyotes WHERE id = ? AND userid = ?', [req.params.id, req.user.id]);
+    if (!result.affectedRows) return res.status(404).send('Report not found or not owned by this account.');
+    res.redirect('/reports');
+  } catch (error) {
+    console.error('Unable to delete user report:', error.message);
+    res.status(500).send('Unable to delete this report.');
+  }
+});
+
+app.get('/admin/reports', requireAdmin, async (req, res) => {
+  try {
+    res.set('Cache-Control', 'no-store');
+    const coyotes = await query('SELECT c.id, c.coyoteName, c.longitude, c.latitude, c.dtime, c.active, c.details, c.photo_mime, COALESCE(u.username, \'Guest\') AS reported_by FROM coyotes c LEFT JOIN app_users u ON u.id = c.userid ORDER BY c.dtime DESC');
+    for (const coyote of coyotes) coyote.reported_at = new Date(Number(coyote.dtime)).toLocaleString();
+    res.render('admin-reports', { coyotes, user: req.user, csrfToken: req.csrfToken });
+  } catch (error) {
+    console.error('Unable to load admin reports:', error.message);
+    res.status(500).send('Unable to load reports. Confirm the admin database migration has been applied.');
+  }
+});
+
+app.post('/admin/reports/:id/delete', requireAdmin, async (req, res) => {
+  try {
+    const result = await query('DELETE FROM coyotes WHERE id = ?', [req.params.id]);
+    if (!result.affectedRows) return res.status(404).send('Report not found.');
+    res.redirect('/admin/reports');
+  } catch (error) {
+    console.error('Unable to delete report:', error.message);
+    res.status(500).send('Unable to delete this report.');
   }
 });
 
@@ -285,7 +326,7 @@ app.post('/Coyotes', async (req, res) => {
 app.get('/Coyotes', async (req, res) => {
   try {
     await deactivateExpiredCoyotes();
-    const coyotes = await query('SELECT c.id, c.coyoteName, c.longitude, c.latitude, c.dtime, c.active, c.details, c.photo_mime, COALESCE(u.username, \'Guest\') AS reported_by FROM coyotes c LEFT JOIN app_users u ON u.id = c.userid WHERE c.active = 1');
+    const coyotes = await query('SELECT c.id, c.coyoteName, c.longitude, c.latitude, c.dtime, c.active, c.details, c.photo_mime, COALESCE(u.username, \'Guest\') AS reported_by, IF(c.userid = ?, TRUE, FALSE) AS can_edit FROM coyotes c LEFT JOIN app_users u ON u.id = c.userid WHERE c.active = 1', [req.user ? req.user.id : 0]);
     res.json(coyotes);
   } catch (error) {
     res.status(500).json({ error: 'Unable to load reports.' });
@@ -306,12 +347,22 @@ app.get('/Coyotes/:id/photo', async (req, res) => {
 });
 
 app.put('/Coyotes/:id', requireLogin, async (req, res) => {
+  const latitude = Number(req.body.latitude);
+  const longitude = Number(req.body.longitude);
+  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 || !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+    return res.status(400).json({ error: 'Valid coordinates are required.' });
+  }
+
   try {
-    const result = await query('UPDATE coyotes SET active = true WHERE id = ? AND userid = ? AND dtime > ?', [req.params.id, req.user.id, Date.now() - COYOTE_LIFETIME_MS]);
-    if (!result.affectedRows) return res.status(404).end();
-    res.status(200).end();
+    const cutoff = Date.now() - COYOTE_LIFETIME_MS;
+    const result = await query('UPDATE coyotes SET latitude = ?, longitude = ? WHERE id = ? AND userid = ? AND active = 1 AND dtime > ?', [latitude, longitude, req.params.id, req.user.id, cutoff]);
+    if (result.affectedRows) return res.status(200).json({ latitude, longitude });
+
+    const ownedReport = await query('SELECT id FROM coyotes WHERE id = ? AND userid = ? AND active = 1 AND dtime > ?', [req.params.id, req.user.id, cutoff]);
+    if (!ownedReport.length) return res.status(404).json({ error: 'This active report was not found or is not yours.' });
+    res.status(200).json({ latitude, longitude });
   } catch (error) {
-    res.status(500).end();
+    res.status(500).json({ error: 'Unable to update this report location.' });
   }
 });
 

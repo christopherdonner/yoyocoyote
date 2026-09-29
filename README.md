@@ -28,9 +28,28 @@ The migration creates `app_users` and `auth_sessions` without dropping the datab
 
 Users can create an account at `/signup`, log in at `/login`, and view their own reports at `/reports`. Passwords are stored as scrypt hashes, and login sessions are stored in MySQL. Passwords must be at least 12 characters.
 
+When logged in, users can drag the pins for their own active reports on the map to correct their locations. The updated coordinates are saved immediately; reports from other users and guest reports cannot be moved by that account.
+
 Reporting a coyote does not require an account. Guest reports are saved with a null user ID; reports submitted while logged in are associated with that account.
 
 The app uses secure cookies by default. For local HTTP-only development, set `COOKIE_SECURE=false`; keep it enabled when requests come through HTTPS in NGINX.
+
+### Admin report management
+
+Run the admin migration after the authentication migration:
+
+```text
+mysql -u root -p coyote_db < db/admin_migration.sql
+```
+
+Grant admin access only to an existing trusted account. In a MySQL prompt, substitute that account's exact username:
+
+```sql
+INSERT INTO app_admins (user_id)
+SELECT id FROM app_users WHERE username = 'YOUR_USERNAME';
+```
+
+Administrators see an **Admin** link on the map and can review all reports at `/admin/reports`, including reporter, time, notes, status, and submitted photos. Deleting a report permanently removes its database row and photo. Ordinary accounts receive a 403 response if they try to open the admin page.
 
 ## Coyote report details and photos
 
@@ -40,6 +59,6 @@ Run the report-photo migration once against the existing database:
 mysql -u root -p coyote_db < db/report_photo_migration.sql
 ```
 
-Selecting **Report a coyote** first requests the visitor's location, then opens a form for optional details and a photo. On supported devices, the photo control can open the camera; otherwise it opens the available image picker. The browser resizes the image and encodes it as JPEG before submission. Reports are saved together with their coordinates, details, and optional photo. The server accepts JPEG data up to 3 MB and stores the binary image in MySQL.
+Selecting **Report a coyote** first requests the visitor's location, then opens a form for optional details and a photo. A photo can be captured directly if a camera is available and permission is granted, or selected from an existing image file. Reports can still be submitted without a photo. The browser resizes images and encodes them as JPEG before submission. The server accepts JPEG data up to 3 MB and stores the binary image in MySQL.
 
 
