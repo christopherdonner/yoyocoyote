@@ -106,8 +106,10 @@
   var deleteSightingButton = document.getElementById('deleteSighting');
   var selectedSighting = null;
 
-  latitude = Number(localStorage.getItem('lat'));
-  longitude = Number(localStorage.getItem('long'));
+  const savedLatitude = localStorage.getItem('lat');
+  const savedLongitude = localStorage.getItem('long');
+  latitude = savedLatitude === null ? NaN : Number(savedLatitude);
+  longitude = savedLongitude === null ? NaN : Number(savedLongitude);
 
   function populateSightingDialog(coyote) {
     sightingTitle.textContent = coyote.coyoteName || 'Coyote sighting';
@@ -171,14 +173,17 @@
   }
 
   async function initMap() {
+    const locationPromise = map ? null : getLocation().catch(() => null);
     const { Map } = await google.maps.importLibrary("maps"),
           { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
-    const hasSavedLocation = Number.isFinite(latitude) && Number.isFinite(longitude);
 
     if (!map) {
+      await locationPromise;
+      const hasLocation = Number.isFinite(latitude) && latitude >= -90 && latitude <= 90
+        && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180;
       map = new Map(document.getElementById("map"), {
-        zoom: hasSavedLocation ? 12 : 10,
-        center: { lat: 43.4516, lng: -80.4925 },
+        zoom: hasLocation ? 14 : 12,
+        center: hasLocation && latitude && longitude ? { lat: latitude, lng: longitude } : { lat: 43.4516, lng: -80.4925 },
         mapId: "coyoteMap",
       });
     }
@@ -265,8 +270,8 @@
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) return reject(new Error('Location is not available in this browser.'));
       navigator.geolocation.getCurrentPosition((position) => {
-        longitude = position.coords.longitude;
-        latitude = position.coords.latitude;
+        longitude = position.coords.longitude || -80.506877151777;
+        latitude = position.coords.latitude || 43.433416855182;
         window.localStorage.setItem('long', longitude);
         window.localStorage.setItem('lat', latitude);
         resolve({ latitude, longitude });
