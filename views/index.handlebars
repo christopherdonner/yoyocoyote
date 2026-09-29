@@ -80,8 +80,10 @@
   var photoPreviewUrl = '';
   var map;
 
-  latitude = Number(localStorage.getItem('lat'));
-  longitude = Number(localStorage.getItem('long'));
+  const savedLatitude = localStorage.getItem('lat');
+  const savedLongitude = localStorage.getItem('long');
+  latitude = savedLatitude === null ? NaN : Number(savedLatitude);
+  longitude = savedLongitude === null ? NaN : Number(savedLongitude);
 
   function refreshCoyoteOpacity() {
     var now = Date.now();
@@ -92,14 +94,17 @@
   }
 
   async function initMap() {
+    const locationPromise = map ? null : getLocation().catch(() => null);
     const { Map } = await google.maps.importLibrary("maps"),
           { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
-    const hasSavedLocation = Number.isFinite(latitude) && Number.isFinite(longitude);
 
     if (!map) {
+      await locationPromise;
+      const hasLocation = Number.isFinite(latitude) && latitude >= -90 && latitude <= 90
+        && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180;
       map = new Map(document.getElementById("map"), {
-        zoom: hasSavedLocation ? 14 : 12,
-        center: hasSavedLocation ? { lat: latitude, lng: longitude } : { lat: 43.4516, lng: -80.4925 },
+        zoom: hasLocation ? 14 : 12,
+        center: hasLocation ? { lat: latitude, lng: longitude } : { lat: 43.4516, lng: -80.4925 },
         mapId: "coyoteMap",
       });
     }
