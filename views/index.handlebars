@@ -46,10 +46,13 @@
 
     <fieldset class="photo-fieldset">
       <legend>Would you like to take a photo? <span>Optional</span></legend>
-      <input class="visually-hidden" id="reportPhoto" type="file" accept="image/*" capture="environment">
-      <button type="button" class="photo-pick-button" id="chooseReportPhoto">Take a photo / choose image</button>
-      <p class="photo-help">On supported phones, this opens the camera. Your image is resized before upload.</p>
-      <img class="photo-preview" id="reportPhotoPreview" alt="Preview of selected coyote report photo" hidden>
+      <p class="photo-help" id="cameraStatus">Checking for a camera…</p>
+      <button type="button" class="photo-pick-button" id="openReportCamera" hidden>Open camera</button>
+      <div class="camera-stage" id="cameraStage" hidden>
+        <video id="reportCamera" autoplay playsinline muted></video>
+        <button type="button" class="photo-pick-button" id="captureReportPhoto">Take photo</button>
+      </div>
+      <img class="photo-preview" id="reportPhotoPreview" alt="Preview of captured coyote report photo" hidden>
       <button type="button" class="photo-remove" id="removeReportPhoto" hidden>Remove photo</button>
     </fieldset>
 
@@ -59,6 +62,15 @@
       <button type="submit" class="report-submit" id="submitReport">Submit report</button>
     </div>
   </form>
+</dialog>
+
+<dialog class="sighting-dialog" id="sightingDialog" aria-labelledby="sightingTitle">
+  <button type="button" class="sighting-close" id="closeSighting" aria-label="Close report details">&times;</button>
+  <p class="eyebrow">COMMUNITY SIGHTING</p>
+  <h2 id="sightingTitle"></h2>
+  <p class="sighting-meta"><span id="sightingReporter"></span><span aria-hidden="true">&middot;</span><time id="sightingTime"></time></p>
+  <p class="sighting-notes" id="sightingNotes"></p>
+  <img class="sighting-photo" id="sightingPhoto" alt="Photo attached to this coyote report" hidden>
 </dialog>
 
 <script>
@@ -78,10 +90,65 @@
   var pendingReportLocation = null;
   var photoDataUrl = '';
   var photoPreviewUrl = '';
+  var sightingHoverTimer;
+  var sightingModalPinned = false;
   var map;
+  var sightingDialog = document.getElementById('sightingDialog');
+  var sightingTitle = document.getElementById('sightingTitle');
+  var sightingReporter = document.getElementById('sightingReporter');
+  var sightingTime = document.getElementById('sightingTime');
+  var sightingNotes = document.getElementById('sightingNotes');
+  var sightingPhoto = document.getElementById('sightingPhoto');
 
   latitude = Number(localStorage.getItem('lat'));
   longitude = Number(localStorage.getItem('long'));
+
+  function populateSightingDialog(coyote) {
+    sightingTitle.textContent = coyote.coyoteName || 'Coyote sighting';
+    sightingReporter.textContent = `Reported by ${coyote.reported_by || 'Guest'}`;
+    const reportDate = new Date(Number(coyote.dtime));
+    sightingTime.dateTime = reportDate.toISOString();
+    sightingTime.textContent = new Intl.DateTimeFormat(undefined, {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    }).format(reportDate);
+    sightingNotes.textContent = coyote.details || 'No additional notes were included.';
+    sightingPhoto.hidden = !coyote.photo_mime;
+    sightingPhoto.removeAttribute('src');
+    if (coyote.photo_mime) sightingPhoto.src = `/Coyotes/${encodeURIComponent(coyote.id)}/photo`;
+  }
+
+  function showSightingPreview(coyote) {
+    if (sightingModalPinned) return;
+    window.clearTimeout(sightingHoverTimer);
+    populateSightingDialog(coyote);
+    if (!sightingDialog.open) sightingDialog.show();
+  }
+
+  function hideSightingPreviewSoon() {
+    window.clearTimeout(sightingHoverTimer);
+    sightingHoverTimer = window.setTimeout(() => {
+      if (!sightingModalPinned && sightingDialog.open && !sightingDialog.matches(':modal')) sightingDialog.close();
+    }, 220);
+  }
+
+  function openSightingModal(coyote) {
+    window.clearTimeout(sightingHoverTimer);
+    populateSightingDialog(coyote);
+    sightingModalPinned = true;
+    if (sightingDialog.open) sightingDialog.close();
+    sightingDialog.showModal();
+  }
+
+  document.getElementById('closeSighting').addEventListener('click', () => {
+    sightingModalPinned = false;
+    sightingDialog.close();
+  });
+  sightingDialog.addEventListener('cancel', () => { sightingModalPinned = false; });
+  sightingDialog.addEventListener('pointerenter', () => window.clearTimeout(sightingHoverTimer));
+  sightingDialog.addEventListener('pointerleave', () => {
+    if (!sightingModalPinned) hideSightingPreviewSoon();
+  });
 
   function refreshCoyoteOpacity() {
     var now = Date.now();
@@ -116,6 +183,9 @@
         coyotePin.src = "/coyote.png";
         coyotePin.alt = coyote.coyoteName;
         coyotePin.className = "coyote-marker";
+        coyotePin.tabIndex = 0;
+        coyotePin.setAttribute('role', 'button');
+        coyotePin.setAttribute('aria-label', `View report: ${coyote.coyoteName || 'coyote sighting'}`);
         coyoteMarkers.push({ image: coyotePin, reportedAt: Number(coyote.dtime) });
         const marker = new AdvancedMarkerElement({
           map: map,
@@ -126,25 +196,16 @@
           title: coyote.coyoteName,
           content: coyotePin
         });
-        marker.addListener('click', () => {
-          const content = document.createElement('div');
-          content.className = 'map-info';
-          const title = document.createElement('strong');
-          title.textContent = coyote.coyoteName || 'Coyote sighting';
-          content.appendChild(title);
-          if (coyote.details) {
-            const details = document.createElement('p');
-            details.textContent = coyote.details;
-            content.appendChild(details);
+        marker.addListener('click', () => openSightingModal(coyote));
+        coyotePin.addEventListener('pointerenter', () => showSightingPreview(coyote));
+        coyotePin.addEventListener('pointerleave', hideSightingPreviewSoon);
+        coyotePin.addEventListener('focus', () => showSightingPreview(coyote));
+        coyotePin.addEventListener('blur', hideSightingPreviewSoon);
+        coyotePin.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            openSightingModal(coyote);
           }
-          if (coyote.photo_mime) {
-            const photo = document.createElement('img');
-            photo.src = `/Coyotes/${encodeURIComponent(coyote.id)}/photo`;
-            photo.alt = 'Photo attached to this coyote report';
-            content.appendChild(photo);
-          }
-          const infoWindow = new google.maps.InfoWindow({ content });
-          infoWindow.open({ map, anchor: marker });
         });
         mapMarkers.push(marker);
       }
@@ -220,36 +281,101 @@
 
   const reportDialog = document.getElementById('reportDialog');
   const reportForm = document.getElementById('reportForm');
-  const reportPhotoInput = document.getElementById('reportPhoto');
   const reportPhotoPreview = document.getElementById('reportPhotoPreview');
   const reportFormStatus = document.getElementById('reportFormStatus');
+  const reportCamera = document.getElementById('reportCamera');
+  const cameraStage = document.getElementById('cameraStage');
+  const cameraStatus = document.getElementById('cameraStatus');
+  const openCameraButton = document.getElementById('openReportCamera');
+  let cameraStream = null;
+  let cameraAvailable = false;
 
-  document.getElementById('chooseReportPhoto').addEventListener('click', () => reportPhotoInput.click());
   document.getElementById('cancelReport').addEventListener('click', () => reportDialog.close());
 
-  reportPhotoInput.addEventListener('change', async () => {
-    const file = reportPhotoInput.files[0];
-    if (!file) return;
-    reportFormStatus.textContent = 'Preparing photo…';
+  async function checkCameraAvailability() {
+    cameraAvailable = false;
+    openCameraButton.hidden = true;
+    cameraStatus.textContent = 'Checking for a camera…';
     try {
-      const compressed = await compressReportPhoto(file);
-      photoDataUrl = await blobToDataUrl(compressed);
-      if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
-      photoPreviewUrl = URL.createObjectURL(compressed);
-      reportPhotoPreview.src = photoPreviewUrl;
-      reportPhotoPreview.hidden = false;
-      document.getElementById('removeReportPhoto').hidden = false;
-      reportFormStatus.textContent = 'Photo added.';
+      if (!navigator.mediaDevices?.getUserMedia || !navigator.mediaDevices?.enumerateDevices) {
+        cameraStatus.textContent = 'Camera capture is not available in this browser.';
+        return;
+      }
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      cameraAvailable = devices.some(device => device.kind === 'videoinput');
+      cameraStatus.textContent = cameraAvailable ? 'Use your camera to attach an optional photo.' : 'No camera is available. You can submit without a photo.';
+      openCameraButton.hidden = !cameraAvailable;
     } catch (error) {
-      photoDataUrl = '';
-      reportPhotoInput.value = '';
-      reportFormStatus.textContent = error.message;
+      cameraStatus.textContent = 'Camera availability could not be checked. You can submit without a photo.';
     }
+  }
+
+  async function stopReportCamera() {
+    if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
+    cameraStream = null;
+    reportCamera.srcObject = null;
+    cameraStage.hidden = true;
+    openCameraButton.hidden = !cameraAvailable;
+  }
+
+  openCameraButton.addEventListener('click', async () => {
+    reportFormStatus.textContent = 'Starting camera…';
+    try {
+      if (!cameraAvailable) throw new Error('No camera is available.');
+      cameraStream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: { ideal: 'environment' } }
+      });
+      reportCamera.srcObject = cameraStream;
+      await reportCamera.play();
+      cameraStage.hidden = false;
+      openCameraButton.hidden = true;
+      reportFormStatus.textContent = '';
+    } catch (error) {
+      await stopReportCamera();
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        reportFormStatus.textContent = 'Camera permission was denied. You can submit without a photo.';
+      } else if (error.name === 'NotFoundError' || error.name === 'OverconstrainedError') {
+        cameraAvailable = false;
+        openCameraButton.hidden = true;
+        cameraStatus.textContent = 'No usable camera is available. You can submit without a photo.';
+        reportFormStatus.textContent = '';
+      } else {
+        reportFormStatus.textContent = 'The camera could not be started. You can submit without a photo.';
+      }
+    }
+  });
+
+  document.getElementById('captureReportPhoto').addEventListener('click', async () => {
+    if (!reportCamera.videoWidth || !reportCamera.videoHeight) {
+      reportFormStatus.textContent = 'The camera is not ready yet. Try again in a moment.';
+      return;
+    }
+    reportFormStatus.textContent = 'Preparing camera photo…';
+    const canvas = document.createElement('canvas');
+    canvas.width = reportCamera.videoWidth;
+    canvas.height = reportCamera.videoHeight;
+    canvas.getContext('2d').drawImage(reportCamera, 0, 0);
+    canvas.toBlob(async (blob) => {
+      try {
+        if (!blob) throw new Error('The camera photo could not be captured. Try again.');
+        const compressed = await compressReportPhoto(blob);
+        photoDataUrl = await blobToDataUrl(compressed);
+        if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+        photoPreviewUrl = URL.createObjectURL(compressed);
+        reportPhotoPreview.src = photoPreviewUrl;
+        reportPhotoPreview.hidden = false;
+        document.getElementById('removeReportPhoto').hidden = false;
+        await stopReportCamera();
+        reportFormStatus.textContent = 'Camera photo added.';
+      } catch (error) {
+        reportFormStatus.textContent = error.message;
+      }
+    }, 'image/jpeg', 0.9);
   });
 
   document.getElementById('removeReportPhoto').addEventListener('click', () => {
     photoDataUrl = '';
-    reportPhotoInput.value = '';
     reportPhotoPreview.removeAttribute('src');
     reportPhotoPreview.hidden = true;
     document.getElementById('removeReportPhoto').hidden = true;
@@ -270,6 +396,7 @@
       document.getElementById('reportLocationStatus').textContent = 'Location captured. You can add optional details or a photo before submitting.';
       reportFormStatus.textContent = '';
       reportDialog.showModal();
+      checkCameraAvailability();
     } catch (error) {
       if (error.code === 1) status.textContent = 'Location permission was denied. Allow location access and try again.';
       else if (error.code === 2) status.textContent = 'Your location could not be determined. Try again in a moment.';
