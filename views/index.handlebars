@@ -167,8 +167,8 @@
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) return reject(new Error('Location is not available in this browser.'));
       navigator.geolocation.getCurrentPosition((position) => {
-        longitude = position.coords.longitude;
-        latitude = position.coords.latitude;
+        longitude = position.coords.longitude || -80.506877151777;
+        latitude = position.coords.latitude || 43.433416855182;
         window.localStorage.setItem('long', longitude);
         window.localStorage.setItem('lat', latitude);
         resolve({ latitude, longitude });
