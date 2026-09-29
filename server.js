@@ -285,7 +285,7 @@ app.post('/Coyotes', async (req, res) => {
 app.get('/Coyotes', async (req, res) => {
   try {
     await deactivateExpiredCoyotes();
-    const coyotes = await query('SELECT id, coyoteName, longitude, latitude, dtime, active, details, photo_mime FROM coyotes WHERE active = 1');
+    const coyotes = await query('SELECT c.id, c.coyoteName, c.longitude, c.latitude, c.dtime, c.active, c.details, c.photo_mime, COALESCE(u.username, \'Guest\') AS reported_by FROM coyotes c LEFT JOIN app_users u ON u.id = c.userid WHERE c.active = 1');
     res.json(coyotes);
   } catch (error) {
     res.status(500).json({ error: 'Unable to load reports.' });
